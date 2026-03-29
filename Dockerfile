@@ -14,4 +14,4 @@ WORKDIR /app/backend
 
 EXPOSE 8000
 
-CMD alembic upgrade head && uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}
+CMD alembic upgrade head 2>&1 || python init_db.py && uvicorn server:app --host 0.0.0.0 --port ${PORT:-8000}
