@@ -60,8 +60,9 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 - [x] 13 pages dashboard : Home, Agents, AgentNew, AgentEdit, Contacts, ContactsImport, Conversations, ConversationDetail, Broadcasts, BroadcastNew, Analytics, Billing, Settings, Onboarding
 
 ### Phase 3 : Deploiement (COMPLETE)
-- [x] railway.json configure (Nixpacks, healthcheck, restart policy)
-- [x] Procfile (web + worker)
+- [x] Dockerfile a la racine (python:3.11-slim, builder DOCKERFILE)
+- [x] railway.json configure (DOCKERFILE builder, healthcheck, restart policy)
+- [x] Procfile (web + celery worker)
 - [x] vercel.json (SPA rewrites, cache headers)
 - [x] CORS configure pour production (FRONTEND_URL + ENVIRONMENT)
 - [x] DEPLOYMENT.md avec guide pas-a-pas
