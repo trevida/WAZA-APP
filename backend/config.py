@@ -36,6 +36,10 @@ class Settings(BaseSettings):
     
     # CORS
     CORS_ORIGINS: str = os.getenv("CORS_ORIGINS", "*")
+    
+    # Production
+    FRONTEND_URL: str = os.getenv("FRONTEND_URL", "https://waza.vercel.app")
+    ENVIRONMENT: str = os.getenv("ENVIRONMENT", "production")
 
 settings = Settings()
 

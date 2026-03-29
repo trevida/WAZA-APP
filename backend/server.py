@@ -62,11 +62,27 @@ async def health_check():
 # Include API router in main app
 app.include_router(api_router)
 
+# Root-level health check for Railway/deployment healthchecks
+@app.get("/health")
+async def root_health_check():
+    return {"status": "ok"}
+
 # Configure CORS
+if settings.CORS_ORIGINS == '*':
+    cors_origins = ["*"]
+elif settings.CORS_ORIGINS:
+    cors_origins = [o.strip() for o in settings.CORS_ORIGINS.split(',')]
+else:
+    cors_origins = [
+        settings.FRONTEND_URL,
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ]
+
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
-    allow_origins=settings.CORS_ORIGINS.split(',') if settings.CORS_ORIGINS != '*' else ['*'],
+    allow_origins=cors_origins,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -76,9 +92,12 @@ app.add_middleware(
 async def startup_event():
     logger.info("=" * 60)
     logger.info("WAZA Backend Starting Up")
+    logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info("=" * 60)
     logger.info(f"Database: PostgreSQL")
     logger.info(f"Redis: {settings.REDIS_URL}")
+    logger.info(f"Frontend URL: {settings.FRONTEND_URL}")
+    logger.info(f"CORS Origins: {cors_origins}")
     logger.info(f"AI Service: Claude Sonnet 4.5 (Emergent LLM)")
     logger.info(f"WhatsApp: Mock Mode")
     logger.info(f"Payment: Stripe (Active) | CinetPay (Mock)")
