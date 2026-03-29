@@ -1,0 +1,103 @@
+{
+  "project_name": "WAZA",
+  "theme": "dark",
+  "archetype": "5 (Jewel & Luxury) + 4 (Swiss & High-Contrast)",
+  "emotional_tone": "Premium, authoritative, trustworthy, deeply rooted in modern African digital identity.",
+  "colors": {
+    "background": "#0F0F1A",
+    "surface": "#1A1A2E",
+    "surface_hover": "#25253A",
+    "primary": "#00C853",
+    "primary_hover": "#00A040",
+    "secondary": "#1A1A2E",
+    "accent": "#FFD600",
+    "accent_hover": "#E6C200",
+    "text_primary": "#FFFFFF",
+    "text_secondary": "#B0B0C0",
+    "text_muted": "#75758A",
+    "border": "rgba(255, 255, 255, 0.08)",
+    "border_focus": "rgba(0, 200, 83, 0.5)",
+    "glass": "rgba(26, 26, 46, 0.6)"
+  },
+  "typography": {
+    "font_families": {
+      "heading": "'Cabinet Grotesk', sans-serif",
+      "body": "'Figtree', sans-serif",
+      "mono": "'JetBrains Mono', monospace"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl lg:text-6xl font-black tracking-tight",
+      "h2": "text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-bold tracking-tight",
+      "h4": "text-lg sm:text-xl font-semibold",
+      "body": "text-base leading-relaxed text-[#B0B0C0]",
+      "small": "text-sm uppercase tracking-[0.2em] text-[#75758A] font-semibold"
+    }
+  },
+  "layout_and_spacing": {
+    "grid_system": "Bento Grid Protocol: Base md:grid-cols-12, wide gap-8 for marketing. For dashboards, tight gap-4 with 1px structural borders.",
+    "container_padding": "Generous spacing. Internal card padding at least p-6. Marketing sections py-24 or py-32.",
+    "borders_and_radius": "Subtle roundness. rounded-2xl or rounded-3xl for marketing, rounded-xl for dashboard. 1px solid stroke with rgba(255,255,255,0.08) on all cards.",
+    "glassmorphism": "Used selectively on sticky navs and dialogs. backdrop-blur-2xl bg-[#1A1A2E]/60 border-b border-white/10. No muddy grays.",
+    "dashboard_specific": "Linear-style one-dimensional scrolling. High density but structured. Use sidebars and tabs. No 'center-everything'. Left-align paragraphs and dense content."
+  },
+  "components_strategy": {
+    "general": "Hybrid rule. Custom HTML+Tailwind for Marketing. Heavily customized Shadcn UI for Dashboard/App.",
+    "buttons": "Primary CTA in African Green (#00C853) with text '#0F0F1A' (for contrast), no gradient, sharp or max rounded-lg. Hover: scale-up slightly with soft green glow shadow-[0_0_15px_rgba(0,200,83,0.3)].",
+    "cards": "Surface #1A1A2E background. 1px border-[#FFFFFF/10]. On hover, -translate-y-1, border changes to rgba(255,214,0,0.3) (Gold hint).",
+    "charts": "Recharts. Use structural strokes instead of just fills. Line charts with #00C853 (Green) and #FFD600 (Gold) against #0F0F1A grid.",
+    "forms_and_inputs": "Shadcn based. bg-[#0F0F1A] border border-white/10 focus:border-[#00C853] focus:ring-1 focus:ring-[#00C853]. left aligned.",
+    "navigation": "Left sidebar for dashboard (collapsible). Fixed top glass nav for marketing page."
+  },
+  "motion_and_interaction": {
+    "hover_states": "All interactive elements must explicitly change state (e.g., text color brightens, border glows, subtle translate).",
+    "transitions": "Use specific properties: transition: transform 0.2s ease, opacity 0.2s ease, border-color 0.2s ease.",
+    "loading": "Skeleton loaders with pulse animation matching surface color, or subtle glowing trace on borders."
+  },
+  "icons_and_assets": {
+    "library": "lucide-react (default) + @phosphor-icons/react (Duotone) for high-end feel.",
+    "icon_style": "Duotone or line, maintaining 1.5px stroke weight.",
+    "images_and_media": [
+      {
+        "category": "hero_background",
+        "url": "https://images.pexels.com/photos/30766684/pexels-photo-30766684.png?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "3D abstract geometric structure with gold lines and black polygons. Use as subtle background in Hero section with heavy radial gradient overlay (#0F0F1A to transparent) to ensure text readability."
+      },
+      {
+        "category": "marketing_abstract",
+        "url": "https://images.unsplash.com/photo-1762278804884-5680cd6725a5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1MTN8MHwxfHNlYXJjaHwyfHxkYXJrJTIwZ3JlZW4lMjB0ZWNobm9sb2d5JTIwYmFja2dyb3VuZCUyMGFic3RyYWN0fGVufDB8fHx8MTc3NDc1NTUzM3ww&ixlib=rb-4.1.0&q=85",
+        "description": "Abstract green/blue light streaks on dark. Use for the features section background to break up solid void navy."
+      },
+      {
+        "category": "testimonial_avatar_1",
+        "url": "https://images.unsplash.com/photo-1738750908048-14200459c3c9?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHw0fHxhZnJpY2FuJTIwYnVzaW5lc3MlMjBwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NzQ3NTU1MjZ8MA&ixlib=rb-4.1.0&q=85",
+        "description": "African business professional in suit, arms crossed. Use for top tier testimonial."
+      },
+      {
+        "category": "testimonial_avatar_2",
+        "url": "https://images.unsplash.com/photo-1739300293504-234817eead52?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA1Mjh8MHwxfHNlYXJjaHwxfHxhZnJpY2FuJTIwYnVzaW5lc3MlMjBwcm9mZXNzaW9uYWwlMjBwb3J0cmFpdHxlbnwwfHx8fDE3NzQ3NTU1MjZ8MA&ixlib=rb-4.1.0&q=85",
+        "description": "African woman professional standing. Use for secondary testimonial."
+      },
+      {
+        "category": "social_icon",
+        "url": "https://images.unsplash.com/photo-1636751364472-12bfad09b451?crop=entropy&cs=srgb&fm=jpg&ixid=M3w4NjA2OTV8MHwxfHNlYXJjaHwxfHx3aGF0c2FwcCUyMGljb24lMjBsb2dvfGVufDB8fHx8MTc3NDc1NTUzNXww&ixlib=rb-4.1.0&q=85",
+        "description": "WhatsApp generic icon asset. Use for agent builder preview header."
+      }
+    ]
+  },
+  "accessibility_and_testing": {
+    "contrast": "Ensure all text over #0F0F1A or #1A1A2E meets 4.5:1. Primary green #00C853 needs dark text (#0F0F1A) inside buttons for max contrast.",
+    "testing_attributes": "All interactive elements MUST include data-testid (e.g., data-testid='hero-cta-button', data-testid='login-submit-button').",
+    "focus_states": "Visible focus rings required: focus:ring-2 focus:ring-[#00C853] focus:ring-offset-2 focus:ring-offset-[#0F0F1A]."
+  },
+  "instructions_to_main_agent": [
+    "1. Setup complete React + Tailwind environment.",
+    "2. Configure tailwind.config.js with the provided custom colors (#0F0F1A, #1A1A2E, #00C853, #FFD600), Cabinet Grotesk font, and animation states.",
+    "3. Implement the Landing Page using custom raw HTML/Tailwind for bento-box layouts and overlapping elements. Apply the 3D abstract background image in the hero.",
+    "4. Implement Dashboard layout (Linear-style: Left Sidebar, Top Header, high density F/Z pattern). Use customized Shadcn UI heavily here.",
+    "5. For Recharts in Dashboard, remove default axes lines where possible, use #00C853 and #FFD600 strokes with strokeWidth={2}, and #1A1A2E for tooltips.",
+    "6. Build Agent Builder with an interactive chat preview resembling WhatsApp UI on the right, configuration form on the left.",
+    "7. DO NOT use generic placeholder text (Lorem Ipsum) or missing placeholder images. Use the precise media provided.",
+    "8. Ensure the 'African tech identity' is felt through the palette, high contrast, and the storytelling/copy without being clichéd."
+  ]
+}
