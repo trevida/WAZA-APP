@@ -13,8 +13,9 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 ### Architecture Technique
 - **Frontend** : React 18, Tailwind CSS, Zustand, React Query, Recharts, Shadcn UI
 - **Backend** : FastAPI, PostgreSQL (SQLAlchemy + Alembic), Redis, Celery
-- **Integrations** : Claude Sonnet 4.5 (Emergent LLM Key), Stripe (test), WhatsApp API (mock), CinetPay (mock)
+- **Integrations** : Claude Sonnet 4.5 (Emergent LLM Key / standard Anthropic SDK fallback), Stripe (test, emergent/standard SDK fallback), WhatsApp API (mock), CinetPay (mock)
 - **Deploiement** : Railway (Backend + PostgreSQL + Redis + Celery Worker) + Vercel (Frontend)
+- **Note Production** : Les services claude_ai.py et stripe_service.py detectent automatiquement l'environnement : emergentintegrations (Emergent preview) ou SDK standards anthropic/stripe (Railway production)
 
 ### Core Features
 1. **Authentification** : Register, Login, Refresh Token, Forgot/Reset Password

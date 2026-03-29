@@ -23,6 +23,7 @@ class Settings(BaseSettings):
     
     # AI
     EMERGENT_LLM_KEY: str = os.getenv("EMERGENT_LLM_KEY", "")
+    ANTHROPIC_API_KEY: str = os.getenv("ANTHROPIC_API_KEY", "")
     
     # WhatsApp
     WHATSAPP_APP_SECRET: str = os.getenv("WHATSAPP_APP_SECRET", "")
