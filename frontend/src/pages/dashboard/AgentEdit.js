@@ -1,1 +1,1 @@
-export { AgentEdit as default } from './PlaceholderPages';
+export { default } from './AgentNew';
