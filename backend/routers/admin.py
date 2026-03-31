@@ -448,6 +448,10 @@ class PaymentConfigUpdate(BaseModel):
     cinetpay_api_key: Optional[str] = None
     cinetpay_site_id: Optional[str] = None
     cinetpay_enabled: Optional[bool] = None
+    flutterwave_public_key: Optional[str] = None
+    flutterwave_secret_key: Optional[str] = None
+    flutterwave_encryption_key: Optional[str] = None
+    flutterwave_enabled: Optional[bool] = None
     bank_name: Optional[str] = None
     bank_account_holder: Optional[str] = None
     bank_account_number: Optional[str] = None
@@ -487,6 +491,10 @@ async def get_payment_config(
         "cinetpay_api_key": _mask_key(config.cinetpay_api_key or ""),
         "cinetpay_site_id": config.cinetpay_site_id or "",
         "cinetpay_enabled": config.cinetpay_enabled,
+        "flutterwave_public_key": _mask_key(config.flutterwave_public_key or ""),
+        "flutterwave_secret_key": _mask_key(config.flutterwave_secret_key or ""),
+        "flutterwave_encryption_key": _mask_key(config.flutterwave_encryption_key or ""),
+        "flutterwave_enabled": config.flutterwave_enabled,
         "bank_name": config.bank_name or "",
         "bank_account_holder": config.bank_account_holder or "",
         "bank_account_number": _mask_key(config.bank_account_number or ""),
@@ -523,6 +531,12 @@ async def update_payment_config(
         os.environ["CINETPAY_API_KEY"] = body.cinetpay_api_key
     if body.cinetpay_site_id:
         os.environ["CINETPAY_SITE_ID"] = body.cinetpay_site_id
+    if body.flutterwave_public_key and "*" not in body.flutterwave_public_key:
+        os.environ["FLUTTERWAVE_PUBLIC_KEY"] = body.flutterwave_public_key
+    if body.flutterwave_secret_key and "*" not in body.flutterwave_secret_key:
+        os.environ["FLUTTERWAVE_SECRET_KEY"] = body.flutterwave_secret_key
+    if body.flutterwave_encryption_key and "*" not in body.flutterwave_encryption_key:
+        os.environ["FLUTTERWAVE_ENCRYPTION_KEY"] = body.flutterwave_encryption_key
 
     db.commit()
     logger.info(f"Admin {admin.email} updated payment config: {updated_fields}")

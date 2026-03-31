@@ -223,6 +223,11 @@ class PaymentConfig(Base):
     cinetpay_api_key = Column(String, default="")
     cinetpay_site_id = Column(String, default="")
     cinetpay_enabled = Column(Boolean, default=False)
+    # Flutterwave
+    flutterwave_public_key = Column(String, default="")
+    flutterwave_secret_key = Column(String, default="")
+    flutterwave_encryption_key = Column(String, default="")
+    flutterwave_enabled = Column(Boolean, default=False)
     # Bank Transfer
     bank_name = Column(String, default="")
     bank_account_holder = Column(String, default="")

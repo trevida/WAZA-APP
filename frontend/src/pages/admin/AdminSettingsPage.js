@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/adminService";
-import { Settings, Shield, Bell, Sliders, CreditCard, Building, Landmark } from "lucide-react";
+import { Settings, Shield, Bell, Sliders, CreditCard, Building, Landmark, Zap } from "lucide-react";
 import { toast } from "sonner";
 
 function Toggle({ enabled, onToggle, testId }) {
@@ -64,6 +64,7 @@ export default function AdminSettingsPage() {
   const [paymentForm, setPaymentForm] = useState({
     stripe_public_key: "", stripe_secret_key: "", stripe_webhook_secret: "", stripe_enabled: false,
     cinetpay_api_key: "", cinetpay_site_id: "", cinetpay_enabled: false,
+    flutterwave_public_key: "", flutterwave_secret_key: "", flutterwave_encryption_key: "", flutterwave_enabled: false,
     bank_name: "", bank_account_holder: "", bank_account_number: "",
     bank_iban: "", bank_swift: "", bank_instructions: "", bank_enabled: false,
   });
@@ -94,6 +95,7 @@ export default function AdminSettingsPage() {
     { id: "platform", label: "Plateforme", icon: Shield },
     { id: "stripe", label: "Stripe", icon: CreditCard },
     { id: "cinetpay", label: "CinetPay", icon: Building },
+    { id: "flutterwave", label: "Flutterwave", icon: Zap },
     { id: "bank", label: "Virement", icon: Landmark },
   ];
 
@@ -251,6 +253,48 @@ export default function AdminSettingsPage() {
               data-testid="cinetpay-save-btn"
             >
               {updatePayment.isPending ? "Sauvegarde..." : "Sauvegarder CinetPay"}
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Flutterwave Tab */}
+      {activeTab === "flutterwave" && (
+        <div className="space-y-4 max-w-2xl">
+          <div className="bg-[#111118] border border-[#1E1E2E] rounded-xl p-6 space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Zap size={18} className="text-[#F5A623]" />
+                <h2 className="text-sm font-semibold">Flutterwave</h2>
+              </div>
+              <Toggle enabled={paymentForm.flutterwave_enabled} onToggle={() => pf("flutterwave_enabled", !paymentForm.flutterwave_enabled)} testId="flutterwave-toggle" />
+            </div>
+
+            <MaskedInput label="Public Key" value={paymentForm.flutterwave_public_key} onChange={(v) => pf("flutterwave_public_key", v)} testId="flutterwave-public-key" placeholder="FLWPUBK-..." />
+            <MaskedInput label="Secret Key" value={paymentForm.flutterwave_secret_key} onChange={(v) => pf("flutterwave_secret_key", v)} testId="flutterwave-secret-key" placeholder="FLWSECK-..." />
+            <MaskedInput label="Encryption Key" value={paymentForm.flutterwave_encryption_key} onChange={(v) => pf("flutterwave_encryption_key", v)} testId="flutterwave-encryption-key" placeholder="Encryption key" />
+
+            <div>
+              <label className="block text-xs text-gray-500 mb-2">Pays supportés</label>
+              <div className="flex flex-wrap gap-2">
+                {["Nigeria", "Ghana", "Kenya", "Afrique du Sud", "Cameroun", "Côte d'Ivoire", "Rwanda", "Tanzania", "Uganda", "Zambia"].map((c) => (
+                  <span key={c} className="px-2.5 py-1 bg-[#F5A623]/10 text-[#F5A623] text-xs rounded-full">{c}</span>
+                ))}
+              </div>
+            </div>
+
+            <button
+              onClick={() => updatePayment.mutate({
+                flutterwave_public_key: paymentForm.flutterwave_public_key,
+                flutterwave_secret_key: paymentForm.flutterwave_secret_key,
+                flutterwave_encryption_key: paymentForm.flutterwave_encryption_key,
+                flutterwave_enabled: paymentForm.flutterwave_enabled,
+              })}
+              disabled={updatePayment.isPending}
+              className="px-6 py-2 bg-[#F5A623] text-black font-semibold rounded-lg hover:bg-[#F5A623]/90 text-sm disabled:opacity-50"
+              data-testid="flutterwave-save-btn"
+            >
+              {updatePayment.isPending ? "Sauvegarde..." : "Sauvegarder Flutterwave"}
             </button>
           </div>
         </div>
