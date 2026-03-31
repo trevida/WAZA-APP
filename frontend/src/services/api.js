@@ -1,11 +1,10 @@
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL
-  || 'https://earnest-creativity-production-e3cc.up.railway.app';
+const API_BASE_URL = 'https://earnest-creativity-production-e3cc.up.railway.app/api';
 
 const api = axios.create({
-  baseURL: `${BACKEND_URL}/api`,
+  baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -34,7 +33,7 @@ api.interceptors.response.use(
       
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
-        const response = await axios.post(`${BACKEND_URL}/api/auth/refresh`, {
+        const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
           refresh_token: refreshToken,
         });
         
