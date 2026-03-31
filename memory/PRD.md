@@ -3,7 +3,7 @@
 ## Product Requirements Document (PRD)
 
 ### Vision
-WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer des agents IA conversationnels sur WhatsApp pour automatiser les ventes, rappels, recouvrements et diffusions.
+WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer des agents IA conversationnels sur WhatsApp.
 
 ### Entreprise
 - **Nom** : Massudom Silicon Valley
@@ -12,50 +12,53 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 
 ### Architecture Technique
 - **Frontend** : React 18, Tailwind CSS, Zustand, React Query, Recharts, Shadcn UI, i18next (FR/EN)
-- **Backend** : FastAPI, PostgreSQL (SQLAlchemy + Alembic), Redis, Celery
+- **Backend** : FastAPI, PostgreSQL (SQLAlchemy + Alembic), Redis, Celery, ReportLab (PDF)
 - **Deploiement** : Railway (Backend) + Vercel (Frontend)
 
 ---
 
 ## Implementation Status
 
-### Phase 1-4 : Backend + Frontend + Deploiement + Admin — COMPLETE
-### Phase 5 : Pages Legales & Demo Interactive — COMPLETE
-### Phase 6 : Demo Analytics — COMPLETE
+### Phase 1-6 — COMPLETE (Auth, Dashboard, Admin, Legal Pages, Demo, Email Verification, i18n FR/EN)
 
-### Phase 7 : Email Verification Mock (COMPLETE - Feb 2026)
-- [x] Service email mock (logs verification URL dans backend console)
-- [x] POST /api/auth/register envoie mock verification email
-- [x] POST /api/auth/verify-email verifie le token
-- [x] POST /api/auth/resend-verification renvoie un token
-- [x] Frontend /verify-email page
-- [x] Banner "email non verifie" sur LoginPage
-- [x] Ecran "Verifie ton email" apres inscription
+### Phase 9 : Analytics Avances (COMPLETE - Feb 2026)
+- [x] GET /api/admin/analytics/advanced
+- [x] Taux de conversion (Free vs Payants)
+- [x] Taux de retention (utilisateurs actifs)
+- [x] Tendance inscriptions 30j (AreaChart)
+- [x] Funnel de conversion par plan (BarChart horizontal)
+- [x] Activite par heure - heatmap (BarChart 24h)
+- [x] Top agents par messages
+- [x] Repartition geographique par pays
+- [x] Page /admin/analytics avec KPIs + 6 graphiques
 
-### Phase 8 : Multi-langue FR/EN (COMPLETE - Feb 2026)
-- [x] i18next + react-i18next setup
-- [x] Fichiers traduction /i18n/fr.json et /i18n/en.json
-- [x] Composant LanguageToggle (FR/EN) avec localStorage persistence
-- [x] Landing page traduite (hero, features, pricing, footer, nav)
-- [x] Login, Register, ForgotPassword, VerifyEmail pages traduites
-- [x] Dashboard sidebar traduit (navigation + toggle)
-- [x] Test 100% frontend + 86% backend (demo user seed fix applied)
+### Phase 10 : Audit Log Admin (COMPLETE - Feb 2026)
+- [x] Modele AuditLog (admin_email, action, target_type, target_id, details, ip)
+- [x] Tracking auto: suspend/reactivate user, plan change, delete user, payment config update, PDF export
+- [x] GET /api/admin/audit-logs avec pagination + filtre par action
+- [x] Page /admin/audit-log avec table, badges couleur, filtre, pagination
+- [x] Navigation sidebar admin mise a jour
+
+### Phase 11 : Export PDF (COMPLETE - Feb 2026)
+- [x] GET /api/admin/export/users-pdf (ReportLab, table formattee)
+- [x] GET /api/admin/export/revenues-pdf (MRR, distribution plans, transactions)
+- [x] Bouton Export PDF sur page Utilisateurs admin
+- [x] Bouton Export PDF sur page Revenus admin
+- [x] Export cree automatiquement un audit log entry
+- [x] Test 100% backend (29/29) + 100% frontend
 
 ---
 
 ## Prioritized Backlog
 
-### P1 — En cours
-- [ ] Analytics avances (nouveaux graphiques: retention, conversion, top agents)
-- [ ] Audit log admin (tracking actions + page /admin/audit-log)
-- [ ] Export PDF rapports admin
+### P1 — Prochaines
 - [ ] WebSocket conversations temps reel
 
 ### P2 — Futur
-- [ ] Email verification reel (SMTP integration - remplacer mock)
-- [ ] WhatsApp Business API reel (remplacer mock)
-- [ ] CinetPay/Flutterwave reel (remplacer mock)
-- [ ] Celery beat pour broadcasts programmes
-- [ ] Traduction pages legales (privacy, terms, contact, about) en anglais
+- [ ] Email verification reel (SMTP / SendGrid)
+- [ ] WhatsApp Business API reel
+- [ ] CinetPay/Flutterwave reel
+- [ ] Celery beat broadcasts programmes
+- [ ] Traduction pages legales en anglais
 - [ ] A/B testing broadcasts
 - [ ] API rate limiting
