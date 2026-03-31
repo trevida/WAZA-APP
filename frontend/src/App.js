@@ -31,6 +31,7 @@ import BroadcastNew from "@/pages/dashboard/BroadcastNew";
 import AnalyticsPage from "@/pages/dashboard/AnalyticsPage";
 import BillingPage from "@/pages/dashboard/BillingPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
+import TeamPage from "@/pages/dashboard/TeamPage";
 import OnboardingPage from "@/pages/dashboard/OnboardingPage";
 
 // Grow pages
@@ -154,6 +155,7 @@ function App() {
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="billing" element={<BillingPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="team" element={<TeamPage />} />
             <Route path="grow" element={<GrowOverview />} />
             <Route path="grow/campaigns" element={<GrowCampaigns />} />
             <Route path="grow/campaigns/new" element={<GrowCampaignNew />} />

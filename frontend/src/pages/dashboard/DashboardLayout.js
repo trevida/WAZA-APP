@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { 
   Home, Bot, Users, MessageCircle, Megaphone, BarChart3, 
   CreditCard, Settings, LogOut, Menu, X, MessageCircle as Logo,
-  Rocket, LayoutDashboard, Link2, FolderOpen
+  Rocket, LayoutDashboard, Link2, FolderOpen, UsersRound
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import useAuthStore from '@/store/authStore';
@@ -40,6 +40,7 @@ const DashboardLayout = () => {
     { name: t('dashboard.conversations'), href: '/dashboard/conversations', icon: MessageCircle, badge: unreadCount },
     { name: t('dashboard.broadcasts'), href: '/dashboard/broadcasts', icon: Megaphone },
     { name: t('dashboard.analytics'), href: '/dashboard/analytics', icon: BarChart3 },
+    { name: 'Equipe', href: '/dashboard/team', icon: UsersRound },
     { name: t('dashboard.billing'), href: '/dashboard/billing', icon: CreditCard },
     { name: t('dashboard.settings'), href: '/dashboard/settings', icon: Settings },
   ];

@@ -16,13 +16,17 @@ const DashboardHome = () => {
   const { data: workspaces } = useQuery({
     queryKey: ['workspaces'],
     queryFn: workspaceService.getAll,
-    onSuccess: (data) => {
-      setWorkspaces(data);
-      if (data.length > 0 && !currentWorkspace) {
-        setCurrentWorkspace(data[0]);
-      }
-    },
   });
+
+  // Set workspaces when data is fetched
+  useEffect(() => {
+    if (workspaces && workspaces.length > 0) {
+      setWorkspaces(workspaces);
+      if (!currentWorkspace) {
+        setCurrentWorkspace(workspaces[0]);
+      }
+    }
+  }, [workspaces, currentWorkspace, setWorkspaces, setCurrentWorkspace]);
 
   // Fetch analytics
   const { data: overview } = useQuery({

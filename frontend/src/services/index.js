@@ -212,3 +212,35 @@ export const billingService = {
     return response.data;
   },
 };
+
+export const teamService = {
+  getMembers: async (workspaceId) => {
+    const response = await api.get(`/workspaces/${workspaceId}/members`);
+    return response.data;
+  },
+
+  invite: async (workspaceId, data) => {
+    const response = await api.post(`/workspaces/${workspaceId}/members/invite`, data);
+    return response.data;
+  },
+
+  updateRole: async (workspaceId, memberId, data) => {
+    const response = await api.put(`/workspaces/${workspaceId}/members/${memberId}`, data);
+    return response.data;
+  },
+
+  remove: async (workspaceId, memberId) => {
+    const response = await api.delete(`/workspaces/${workspaceId}/members/${memberId}`);
+    return response.data;
+  },
+
+  getMyInvitations: async () => {
+    const response = await api.get('/workspaces/my-invitations');
+    return response.data;
+  },
+
+  acceptInvitation: async (token) => {
+    const response = await api.post(`/workspaces/invitations/${token}/accept`);
+    return response.data;
+  },
+};

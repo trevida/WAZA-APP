@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from database import get_db
-from models import Workspace, User, Agent, Contact, Conversation, Message, UsageLog
+from models import Workspace, User, Agent, Contact, Conversation, Message, UsageLog, WorkspaceMember
 from schemas.workspace import WorkspaceCreate, WorkspaceUpdate, WorkspaceResponse, WorkspaceConnectWhatsApp
 from utils.dependencies import get_current_active_user
 from utils.limits import check_workspace_limit, get_plan_limits
@@ -16,9 +16,20 @@ async def list_workspaces(
     current_user: User = Depends(get_current_active_user),
     db: Session = Depends(get_db)
 ):
-    """List all workspaces for current user"""
-    workspaces = db.query(Workspace).filter(Workspace.user_id == current_user.id).all()
-    return workspaces
+    """List all workspaces for current user (owned + member)"""
+    owned = db.query(Workspace).filter(Workspace.user_id == current_user.id).all()
+
+    member_ws_ids = db.query(WorkspaceMember.workspace_id).filter(
+        WorkspaceMember.user_id == current_user.id,
+        WorkspaceMember.status == "active",
+    ).all()
+    member_ids = [row[0] for row in member_ws_ids]
+
+    shared = []
+    if member_ids:
+        shared = db.query(Workspace).filter(Workspace.id.in_(member_ids)).all()
+
+    return owned + shared
 
 @router.post("", response_model=WorkspaceResponse, status_code=status.HTTP_201_CREATED)
 async def create_workspace(
@@ -51,6 +62,71 @@ async def create_workspace(
     logger.info(f"Workspace created: {new_workspace.id} for user {current_user.email}")
     
     return new_workspace
+
+@router.get("/my-invitations")
+async def my_pending_invitations(
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """List pending invitations for current user"""
+    invitations = db.query(WorkspaceMember).filter(
+        WorkspaceMember.email == current_user.email,
+        WorkspaceMember.status == "pending",
+    ).all()
+
+    result = []
+    for inv in invitations:
+        ws = db.query(Workspace).filter(Workspace.id == inv.workspace_id).first()
+        inviter = db.query(User).filter(User.id == inv.invited_by).first() if inv.invited_by else None
+        result.append({
+            "id": inv.id,
+            "workspace_id": inv.workspace_id,
+            "workspace_name": ws.name if ws else "Inconnu",
+            "role": inv.role.value if hasattr(inv.role, 'value') else inv.role,
+            "invite_token": inv.invite_token,
+            "invited_by_name": inviter.full_name if inviter else "Inconnu",
+            "created_at": inv.created_at.isoformat() if inv.created_at else None,
+        })
+
+    return {"invitations": result, "total": len(result)}
+
+@router.post("/invitations/{token}/accept")
+async def accept_invitation(
+    token: str,
+    current_user: User = Depends(get_current_active_user),
+    db: Session = Depends(get_db),
+):
+    """Accept a workspace invitation"""
+    from datetime import datetime, timezone
+    
+    member = db.query(WorkspaceMember).filter(
+        WorkspaceMember.invite_token == token,
+    ).first()
+
+    if not member:
+        raise HTTPException(status_code=404, detail="Invitation introuvable ou expiree")
+
+    if member.status == "active":
+        raise HTTPException(status_code=400, detail="Invitation deja acceptee")
+
+    if member.email != current_user.email:
+        raise HTTPException(status_code=403, detail="Cette invitation n'est pas pour vous")
+
+    member.status = "active"
+    member.user_id = current_user.id
+    member.accepted_at = datetime.now(timezone.utc)
+    member.invite_token = None
+    db.commit()
+
+    workspace = db.query(Workspace).filter(Workspace.id == member.workspace_id).first()
+
+    logger.info(f"Invitation accepted: {current_user.email} joined workspace {member.workspace_id}")
+
+    return {
+        "message": f"Vous avez rejoint le workspace '{workspace.name if workspace else ''}'",
+        "workspace_id": member.workspace_id,
+        "role": member.role.value if hasattr(member.role, 'value') else member.role,
+    }
 
 @router.get("/{workspace_id}", response_model=WorkspaceResponse)
 async def get_workspace(

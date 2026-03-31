@@ -41,6 +41,16 @@ class PaymentProvider(str, enum.Enum):
     CINETPAY = "cinetpay"
     STRIPE = "stripe"
 
+class MemberRole(str, enum.Enum):
+    OWNER = "owner"
+    ADMIN = "admin"
+    MEMBER = "member"
+
+class InviteStatus(str, enum.Enum):
+    PENDING = "pending"
+    ACTIVE = "active"
+    DECLINED = "declined"
+
 class User(Base):
     __tablename__ = "users"
     
@@ -83,6 +93,26 @@ class Workspace(Base):
     conversations = relationship("Conversation", back_populates="workspace", cascade="all, delete-orphan")
     broadcasts = relationship("Broadcast", back_populates="workspace", cascade="all, delete-orphan")
     usage_logs = relationship("UsageLog", back_populates="workspace", cascade="all, delete-orphan")
+    members = relationship("WorkspaceMember", back_populates="workspace", cascade="all, delete-orphan")
+
+class WorkspaceMember(Base):
+    __tablename__ = "workspace_members"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    workspace_id = Column(String, ForeignKey("workspaces.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"))
+    email = Column(String, nullable=False)
+    role = Column(String, default="member", nullable=False)
+    status = Column(String, default="pending", nullable=False)
+    invite_token = Column(String, unique=True)
+    invited_by = Column(String, ForeignKey("users.id"))
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    accepted_at = Column(DateTime)
+
+    # Relationships
+    workspace = relationship("Workspace", back_populates="members")
+    user = relationship("User", foreign_keys=[user_id])
+    inviter = relationship("User", foreign_keys=[invited_by])
 
 class Agent(Base):
     __tablename__ = "agents"
