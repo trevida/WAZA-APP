@@ -26,35 +26,41 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 ### Phase 9 : Export PDF (ReportLab) — COMPLETE
 ### Phase 10 : WebSocket Conversations Temps Reel — COMPLETE
 ### Phase 11 : WAZA Grow — AI Facebook Ads Manager — COMPLETE
+### Phase 12 : Traduction pages legales i18n (FR/EN) — COMPLETE
+### Phase 13 : API Rate Limiting (slowapi) — COMPLETE
 
-### Phase 12 : Traduction pages legales i18n (FR/EN) — COMPLETE (Feb 2026)
-- [x] Privacy, Terms, About, Contact — toutes traduites via react-i18next
-- [x] LanguageToggle sur chaque page publique
-- [x] fr.json et en.json mis a jour avec 150+ cles de traduction
-- [x] Landing page Grow teaser i18n
-- [x] Testing: 100% pass
+### Phase 14 : A/B Testing Broadcasts — COMPLETE (Feb 2026)
+- [x] Model: ab_test_enabled, variant_b_template, variant_a/b_sent/delivered/replied, winner
+- [x] Backend: Create A/B broadcast, validate variant_b required, stats with ab_test data
+- [x] Frontend: 4-step wizard (Agent > Message+A/B > Audience > Send Mode)
+- [x] A/B toggle with variant B textarea, 50/50 split info, summary preview
+- [x] Stats panel with variant comparison and winner badge
+- [x] Testing: 13/13 backend, 100% frontend — ALL PASSING
 
-### Phase 13 : API Rate Limiting (slowapi) — COMPLETE (Feb 2026)
-- [x] slowapi integre dans FastAPI
-- [x] auth/register: 5/min, auth/login: 10/min
-- [x] auth/forgot-password: 3/min, auth/resend-verification: 3/min
-- [x] demo/chat: 15/min, grow/waitlist: 5/min
-- [x] Default: 120/min
-- [x] GET /api/health retourne rate_limits
-- [x] HTTP 429 retourne quand limite atteinte
-- [x] Testing: 10/10 pass
+### Phase 15 : Broadcasts Programmes (Scheduling) — COMPLETE (Feb 2026)
+- [x] Backend: scheduled_at validation (future only), status=scheduled on creation
+- [x] Backend: cancel-schedule endpoint (back to draft), delete broadcast
+- [x] Backend: BroadcastStatus.SENDING added
+- [x] Backend: check_scheduled_broadcasts task (checks pending scheduled)
+- [x] Frontend: Send mode step (now vs scheduled), datetime picker
+- [x] Frontend: Scheduled badge, cancel action, broadcast list with all statuses
+- [x] Testing: included in Phase 14 tests — ALL PASSING
 
 ---
 
 ## Prioritized Backlog
 
-### P1 — Prochaines
+### P1 — Integrations reelles (necessitent cles API)
 - [ ] Email verification reel (SMTP / SendGrid)
 - [ ] WhatsApp Business API reel (remplacer mock)
 - [ ] CinetPay/Flutterwave SDK reel
 - [ ] Meta Marketing API reel pour WAZA Grow (actuellement MOCK)
 
 ### P2 — Futur
-- [ ] A/B testing broadcasts
-- [ ] Celery beat broadcasts programmes
 - [ ] Team collaboration (multi-users par workspace)
+
+### Notes techniques
+- WhatsApp send_message est MOCK
+- Reply rate simulation est MOCK (20-40% aleatoire)
+- Celery/Redis non disponibles — BackgroundTasks FastAPI utilise
+- check_scheduled_broadcasts necessite un cron job ou Celery beat en production
