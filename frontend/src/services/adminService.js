@@ -55,4 +55,14 @@ export const adminService = {
     const response = await api.get('/admin/top-workspaces', { params: { limit } });
     return response.data;
   },
+
+  getPaymentConfig: async () => {
+    const response = await api.get('/admin/payment-config');
+    return response.data;
+  },
+
+  updatePaymentConfig: async (data) => {
+    const response = await api.put('/admin/payment-config', data);
+    return response.data;
+  },
 };

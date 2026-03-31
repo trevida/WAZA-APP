@@ -5,7 +5,7 @@ from database import get_db
 from models import (
     User, Workspace, Agent, Contact, Conversation, Message,
     Broadcast, Subscription, PaymentTransaction, UsageLog,
-    PlanType, SubscriptionStatus, ConversationStatus
+    PlanType, SubscriptionStatus, ConversationStatus, PaymentConfig
 )
 from utils.dependencies import get_current_superadmin
 from utils.auth import hash_password
@@ -437,3 +437,93 @@ async def get_top_workspaces(
             "messages_this_month": ws.monthly_message_count or 0,
         })
     return result
+
+
+# --- Payment Config Schemas ---
+class PaymentConfigUpdate(BaseModel):
+    stripe_public_key: Optional[str] = None
+    stripe_secret_key: Optional[str] = None
+    stripe_webhook_secret: Optional[str] = None
+    stripe_enabled: Optional[bool] = None
+    cinetpay_api_key: Optional[str] = None
+    cinetpay_site_id: Optional[str] = None
+    cinetpay_enabled: Optional[bool] = None
+    bank_name: Optional[str] = None
+    bank_account_holder: Optional[str] = None
+    bank_account_number: Optional[str] = None
+    bank_iban: Optional[str] = None
+    bank_swift: Optional[str] = None
+    bank_instructions: Optional[str] = None
+    bank_enabled: Optional[bool] = None
+
+
+def _mask_key(value: str) -> str:
+    if not value or len(value) < 8:
+        return value
+    return value[:4] + "*" * (len(value) - 8) + value[-4:]
+
+
+def _get_or_create_config(db: Session) -> PaymentConfig:
+    config = db.query(PaymentConfig).first()
+    if not config:
+        config = PaymentConfig()
+        db.add(config)
+        db.commit()
+        db.refresh(config)
+    return config
+
+
+@router.get("/payment-config")
+async def get_payment_config(
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    config = _get_or_create_config(db)
+    return {
+        "stripe_public_key": config.stripe_public_key or "",
+        "stripe_secret_key": _mask_key(config.stripe_secret_key or ""),
+        "stripe_webhook_secret": _mask_key(config.stripe_webhook_secret or ""),
+        "stripe_enabled": config.stripe_enabled,
+        "cinetpay_api_key": _mask_key(config.cinetpay_api_key or ""),
+        "cinetpay_site_id": config.cinetpay_site_id or "",
+        "cinetpay_enabled": config.cinetpay_enabled,
+        "bank_name": config.bank_name or "",
+        "bank_account_holder": config.bank_account_holder or "",
+        "bank_account_number": _mask_key(config.bank_account_number or ""),
+        "bank_iban": _mask_key(config.bank_iban or ""),
+        "bank_swift": config.bank_swift or "",
+        "bank_instructions": config.bank_instructions or "",
+        "bank_enabled": config.bank_enabled,
+    }
+
+
+@router.put("/payment-config")
+async def update_payment_config(
+    body: PaymentConfigUpdate,
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    config = _get_or_create_config(db)
+    updated_fields = []
+
+    for field, value in body.model_dump(exclude_none=True).items():
+        # Skip masked values (user didn't change them)
+        if isinstance(value, str) and "*" in value:
+            continue
+        setattr(config, field, value)
+        updated_fields.append(field)
+
+    # Hot-reload payment service env vars if keys changed
+    import os
+    if body.stripe_secret_key and "*" not in body.stripe_secret_key:
+        os.environ["STRIPE_API_KEY"] = body.stripe_secret_key
+    if body.stripe_webhook_secret and "*" not in body.stripe_webhook_secret:
+        os.environ["STRIPE_WEBHOOK_SECRET"] = body.stripe_webhook_secret
+    if body.cinetpay_api_key and "*" not in body.cinetpay_api_key:
+        os.environ["CINETPAY_API_KEY"] = body.cinetpay_api_key
+    if body.cinetpay_site_id:
+        os.environ["CINETPAY_SITE_ID"] = body.cinetpay_site_id
+
+    db.commit()
+    logger.info(f"Admin {admin.email} updated payment config: {updated_fields}")
+    return {"message": "Payment config updated", "updated_fields": updated_fields}

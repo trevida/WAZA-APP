@@ -208,3 +208,28 @@ class PaymentTransaction(Base):
     payment_metadata = Column(Text)  # JSON string
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class PaymentConfig(Base):
+    __tablename__ = "payment_config"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    # Stripe
+    stripe_public_key = Column(String, default="")
+    stripe_secret_key = Column(String, default="")
+    stripe_webhook_secret = Column(String, default="")
+    stripe_enabled = Column(Boolean, default=False)
+    # CinetPay
+    cinetpay_api_key = Column(String, default="")
+    cinetpay_site_id = Column(String, default="")
+    cinetpay_enabled = Column(Boolean, default=False)
+    # Bank Transfer
+    bank_name = Column(String, default="")
+    bank_account_holder = Column(String, default="")
+    bank_account_number = Column(String, default="")
+    bank_iban = Column(String, default="")
+    bank_swift = Column(String, default="")
+    bank_instructions = Column(Text, default="")
+    bank_enabled = Column(Boolean, default=False)
+    # Meta
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

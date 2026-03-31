@@ -89,7 +89,8 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 - [x] Frontend Admin Users : table paginee + recherche + filtre plan + actions (suspend/plan/delete) + modal detail
 - [x] Frontend Admin Revenues : MRR cards, BarChart par plan, table transactions, export CSV
 - [x] Frontend Admin Workspaces : table avec owner, WhatsApp status, agents/contacts
-- [x] Frontend Admin Settings : mode maintenance, annonces, limites plans
+- [x] Frontend Admin Settings : mode maintenance, annonces, limites plans, configuration paiements (Stripe/CinetPay/Virement)
+- [x] Backend Payment Config : model PaymentConfig + GET/PUT /api/admin/payment-config avec masquage cles + hot-reload env vars
 
 ---
 
