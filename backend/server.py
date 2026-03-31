@@ -10,7 +10,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Import routers
-from routers import auth, workspaces, agents, webhook, billing, contacts, conversations, broadcasts, analytics, admin, demo
+from routers import auth, workspaces, agents, webhook, billing, contacts, conversations, broadcasts, analytics, admin, demo, ws
 from config import settings
 
 # Configure logging
@@ -42,6 +42,10 @@ api_router.include_router(webhook.router)
 api_router.include_router(billing.router)
 api_router.include_router(admin.router)
 api_router.include_router(demo.router)
+
+# WebSocket routes at app level (ws:// doesn't use /api prefix via ingress)
+# But we add under /api so the K8s ingress routes them properly
+api_router.include_router(ws.router)
 
 # Root endpoint
 @api_router.get("/")

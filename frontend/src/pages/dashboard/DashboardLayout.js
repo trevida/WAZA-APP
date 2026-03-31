@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import useAuthStore from '@/store/authStore';
 import useWorkspaceStore from '@/store/workspaceStore';
 import LanguageToggle from '@/components/LanguageToggle';
+import { useNotificationWS } from '@/hooks/useWebSocket';
 import { useState } from 'react';
 
 const DashboardLayout = () => {
@@ -19,12 +20,13 @@ const DashboardLayout = () => {
   const logout = useAuthStore((state) => state.logout);
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const { unreadCount, clearUnread } = useNotificationWS();
 
   const navigation = [
     { name: t('dashboard.home'), href: '/dashboard', icon: Home },
     { name: t('dashboard.agents'), href: '/dashboard/agents', icon: Bot },
     { name: t('dashboard.contacts'), href: '/dashboard/contacts', icon: Users },
-    { name: t('dashboard.conversations'), href: '/dashboard/conversations', icon: MessageCircle },
+    { name: t('dashboard.conversations'), href: '/dashboard/conversations', icon: MessageCircle, badge: unreadCount },
     { name: t('dashboard.broadcasts'), href: '/dashboard/broadcasts', icon: Megaphone },
     { name: t('dashboard.analytics'), href: '/dashboard/analytics', icon: BarChart3 },
     { name: t('dashboard.billing'), href: '/dashboard/billing', icon: CreditCard },
@@ -64,11 +66,13 @@ const DashboardLayout = () => {
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto">
           {navigation.map((item) => {
             const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/');
+            const isConversations = item.href.includes('conversations');
             return (
               <Link
                 key={item.name}
                 to={item.href}
-                className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                onClick={() => { if (isConversations) clearUnread(); }}
+                className={`flex items-center px-3 py-2 rounded-lg transition-colors relative ${
                   isActive
                     ? 'bg-primary/10 text-primary'
                     : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
@@ -77,6 +81,15 @@ const DashboardLayout = () => {
               >
                 <item.icon className="w-5 h-5 flex-shrink-0" />
                 {sidebarOpen && <span className="ml-3">{item.name}</span>}
+                {/* Unread badge */}
+                {item.badge > 0 && (
+                  <span
+                    className="absolute right-2 top-1/2 -translate-y-1/2 min-w-[20px] h-5 flex items-center justify-center bg-red-500 text-white text-xs font-bold rounded-full px-1"
+                    data-testid="unread-badge"
+                  >
+                    {item.badge > 99 ? '99+' : item.badge}
+                  </span>
+                )}
               </Link>
             );
           })}
