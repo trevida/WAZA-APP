@@ -242,8 +242,12 @@ async def update_campaign_status(campaign_id: str, status: str = Query(...), use
         raise HTTPException(status_code=404, detail="Campagne introuvable")
     campaign.status = GrowCampaignStatus(status)
     if status == "active" and not campaign.results:
-        # Simulate mock results
-        days = max(1, (datetime.now(timezone.utc) - (campaign.start_date or campaign.created_at)).days) if campaign.start_date else 7
+        # Simulate mock results - handle timezone-naive datetimes
+        now = datetime.now(timezone.utc)
+        ref_date = campaign.start_date or campaign.created_at
+        if ref_date and ref_date.tzinfo is None:
+            ref_date = ref_date.replace(tzinfo=timezone.utc)
+        days = max(1, (now - ref_date).days) if ref_date else 7
         spend = min(campaign.budget_fcfa * days, campaign.budget_fcfa * 14) if campaign.budget_type == "daily" else campaign.budget_fcfa
         campaign.results = {
             "impressions": random.randint(5000, 50000),

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/adminService";
-import { Settings, Shield, Bell, Sliders, CreditCard, Building, Landmark, Zap } from "lucide-react";
+import { Settings, Shield, Bell, Sliders, CreditCard, Building, Landmark, Zap, Flag, Rocket, Download, Mail } from "lucide-react";
 import { toast } from "sonner";
 
 function Toggle({ enabled, onToggle, testId }) {
@@ -93,11 +93,39 @@ export default function AdminSettingsPage() {
 
   const tabs = [
     { id: "platform", label: "Plateforme", icon: Shield },
+    { id: "flags", label: "Feature Flags", icon: Flag },
     { id: "stripe", label: "Stripe", icon: CreditCard },
     { id: "cinetpay", label: "CinetPay", icon: Building },
     { id: "flutterwave", label: "Flutterwave", icon: Zap },
     { id: "bank", label: "Virement", icon: Landmark },
   ];
+
+  // Feature Flags
+  const { data: featureFlags } = useQuery({
+    queryKey: ["admin-feature-flags"],
+    queryFn: adminService.getFeatureFlags,
+  });
+  const [flagForm, setFlagForm] = useState({ grow_enabled: false, grow_beta: false });
+  useEffect(() => {
+    if (featureFlags) setFlagForm({ grow_enabled: !!featureFlags.grow_enabled, grow_beta: !!featureFlags.grow_beta });
+  }, [featureFlags]);
+
+  const updateFlags = useMutation({
+    mutationFn: adminService.updateFeatureFlags,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["admin-feature-flags"]);
+      toast.success("Feature flags mis a jour");
+    },
+    onError: () => toast.error("Erreur"),
+  });
+
+  // Grow Stats & Waitlist
+  const { data: growStats } = useQuery({ queryKey: ["admin-grow-stats"], queryFn: adminService.getGrowStats, enabled: activeTab === "flags" });
+  const { data: waitlistData } = useQuery({ queryKey: ["admin-waitlist"], queryFn: adminService.getGrowWaitlist, enabled: activeTab === "flags" });
+  const notifyWaitlist = useMutation({
+    mutationFn: adminService.notifyWaitlist,
+    onSuccess: (data) => { queryClient.invalidateQueries(["admin-waitlist"]); toast.success(data.message); },
+  });
 
   return (
     <div className="space-y-6" data-testid="admin-settings-page">
@@ -181,6 +209,105 @@ export default function AdminSettingsPage() {
               ))}
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Feature Flags Tab */}
+      {activeTab === "flags" && (
+        <div className="space-y-6 max-w-2xl">
+          {/* Toggle Flags */}
+          <div className="bg-[#111118] border border-[#1E1E2E] rounded-xl p-6 space-y-5">
+            <div className="flex items-center gap-3 mb-2">
+              <Flag size={18} className="text-orange-400" />
+              <h2 className="text-sm font-semibold">WAZA Grow — Feature Flags</h2>
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-white">Activer WAZA Grow</p>
+                <p className="text-xs text-gray-500">Rend le module Grow visible dans le dashboard et active les souscriptions</p>
+              </div>
+              <Toggle enabled={flagForm.grow_enabled} onToggle={() => setFlagForm(p => ({ ...p, grow_enabled: !p.grow_enabled }))} testId="flag-grow-enabled-toggle" />
+            </div>
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-white">Mode Beta</p>
+                <p className="text-xs text-gray-500">Restreint l'acces aux beta-testeurs uniquement</p>
+              </div>
+              <Toggle enabled={flagForm.grow_beta} onToggle={() => setFlagForm(p => ({ ...p, grow_beta: !p.grow_beta }))} testId="flag-grow-beta-toggle" />
+            </div>
+            <button
+              onClick={() => updateFlags.mutate(flagForm)}
+              disabled={updateFlags.isPending}
+              className="px-6 py-2 bg-orange-500 text-white font-semibold rounded-lg hover:bg-orange-600 text-sm disabled:opacity-50"
+              data-testid="flags-save-btn"
+            >
+              {updateFlags.isPending ? "Sauvegarde..." : "Sauvegarder les flags"}
+            </button>
+          </div>
+
+          {/* Grow Stats */}
+          {growStats && (
+            <div className="bg-[#111118] border border-[#1E1E2E] rounded-xl p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <Rocket size={18} className="text-orange-400" />
+                <h2 className="text-sm font-semibold">Stats WAZA Grow</h2>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                {[
+                  { label: "Abonnes actifs", value: growStats.active_subscribers },
+                  { label: "Total abonnes", value: growStats.total_subscribers },
+                  { label: "Campagnes", value: growStats.total_campaigns },
+                  { label: "MRR Grow", value: `${(growStats.grow_mrr || 0).toLocaleString()} F` },
+                  { label: "Liste d'attente", value: growStats.waitlist_count },
+                  { label: "Budget pub gere", value: `${(growStats.total_ad_budget_managed || 0).toLocaleString()} F` },
+                ].map((s, i) => (
+                  <div key={i} className="bg-[#0A0A0F] rounded-lg p-3">
+                    <p className="text-xs text-gray-500">{s.label}</p>
+                    <p className="text-lg font-bold text-white">{s.value}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Waitlist */}
+          {waitlistData && (
+            <div className="bg-[#111118] border border-[#1E1E2E] rounded-xl p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  <Mail size={18} className="text-orange-400" />
+                  <h2 className="text-sm font-semibold">Liste d'attente ({waitlistData.total})</h2>
+                </div>
+                <div className="flex gap-2">
+                  <button onClick={() => adminService.exportWaitlistCsv()} className="px-3 py-1.5 bg-[#0A0A0F] border border-[#1E1E2E] rounded-lg text-xs text-gray-400 hover:text-white flex items-center gap-1" data-testid="waitlist-export-btn">
+                    <Download size={12} /> CSV
+                  </button>
+                  <button onClick={() => notifyWaitlist.mutate()} disabled={notifyWaitlist.isPending} className="px-3 py-1.5 bg-orange-500/10 border border-orange-500/30 rounded-lg text-xs text-orange-400 hover:bg-orange-500/20 flex items-center gap-1" data-testid="waitlist-notify-btn">
+                    <Mail size={12} /> Notifier tous
+                  </button>
+                </div>
+              </div>
+              {waitlistData.entries?.length > 0 ? (
+                <div className="space-y-2 max-h-64 overflow-y-auto">
+                  {waitlistData.entries.map((e, i) => (
+                    <div key={i} className="flex items-center justify-between bg-[#0A0A0F] rounded-lg px-3 py-2 text-sm">
+                      <div>
+                        <span className="text-white">{e.email}</span>
+                        {e.name && <span className="text-gray-500 ml-2">({e.name})</span>}
+                        {e.company && <span className="text-gray-600 ml-1">- {e.company}</span>}
+                      </div>
+                      <div className="flex items-center gap-2 text-xs text-gray-500">
+                        {e.created_at && <span>{new Date(e.created_at).toLocaleDateString('fr-FR')}</span>}
+                        {e.notified_at && <span className="text-green-500">Notifie</span>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-500 text-center py-4">Aucune inscription</p>
+              )}
+            </div>
+          )}
         </div>
       )}
 

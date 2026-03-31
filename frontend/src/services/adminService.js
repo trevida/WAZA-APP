@@ -104,4 +104,38 @@ export const adminService = {
     link.click();
     link.remove();
   },
+
+  // Feature Flags
+  getFeatureFlags: async () => {
+    const response = await api.get('/admin/feature-flags');
+    return response.data;
+  },
+  updateFeatureFlags: async (data) => {
+    const response = await api.put('/admin/feature-flags', data);
+    return response.data;
+  },
+
+  // Grow Stats
+  getGrowStats: async () => {
+    const response = await api.get('/admin/grow-stats');
+    return response.data;
+  },
+  getGrowWaitlist: async () => {
+    const response = await api.get('/admin/waitlist');
+    return response.data;
+  },
+  notifyWaitlist: async () => {
+    const response = await api.post('/admin/waitlist/notify-all');
+    return response.data;
+  },
+  exportWaitlistCsv: async () => {
+    const response = await api.get('/admin/waitlist/export-csv', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'waza_grow_waitlist.csv');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  },
 };

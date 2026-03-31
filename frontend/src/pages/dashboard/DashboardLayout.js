@@ -1,15 +1,18 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { useQuery } from '@tanstack/react-query';
 import { 
   Home, Bot, Users, MessageCircle, Megaphone, BarChart3, 
-  CreditCard, Settings, LogOut, Menu, X, MessageCircle as Logo 
+  CreditCard, Settings, LogOut, Menu, X, MessageCircle as Logo,
+  Rocket, LayoutDashboard, Link2, FolderOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import useAuthStore from '@/store/authStore';
 import useWorkspaceStore from '@/store/workspaceStore';
 import LanguageToggle from '@/components/LanguageToggle';
 import { useNotificationWS } from '@/hooks/useWebSocket';
+import { growService } from '@/services/growService';
 import { useState } from 'react';
 
 const DashboardLayout = () => {
@@ -21,6 +24,14 @@ const DashboardLayout = () => {
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const { unreadCount, clearUnread } = useNotificationWS();
+
+  const { data: growFlags } = useQuery({
+    queryKey: ['grow-flags'],
+    queryFn: growService.getFeatureFlags,
+    staleTime: 10 * 60 * 1000,
+  });
+
+  const growEnabled = growFlags?.grow_enabled;
 
   const navigation = [
     { name: t('dashboard.home'), href: '/dashboard', icon: Home },
@@ -93,6 +104,56 @@ const DashboardLayout = () => {
               </Link>
             );
           })}
+
+          {/* WAZA Grow Section */}
+          {growEnabled && (
+            <>
+              {sidebarOpen && (
+                <div className="pt-4 pb-1 px-3">
+                  <div className="text-[10px] uppercase tracking-widest text-orange-400 font-bold flex items-center gap-1.5">
+                    <Rocket className="w-3 h-3" /> WAZA Grow
+                  </div>
+                </div>
+              )}
+              {[
+                { name: 'Vue d\'ensemble', href: '/dashboard/grow', icon: LayoutDashboard },
+                { name: 'Campagnes', href: '/dashboard/grow/campaigns', icon: FolderOpen },
+                { name: 'Connexion FB', href: '/dashboard/grow/connect', icon: Link2 },
+              ].map((item) => {
+                const isActive = location.pathname === item.href;
+                return (
+                  <Link
+                    key={item.href}
+                    to={item.href}
+                    className={`flex items-center px-3 py-2 rounded-lg transition-colors ${
+                      isActive
+                        ? 'bg-orange-500/10 text-orange-400'
+                        : 'text-text-secondary hover:bg-surface-hover hover:text-text-primary'
+                    }`}
+                    data-testid={`nav-grow-${item.href.split('/').pop()}-link`}
+                  >
+                    <item.icon className="w-5 h-5 flex-shrink-0" />
+                    {sidebarOpen && <span className="ml-3 text-sm">{item.name}</span>}
+                  </Link>
+                );
+              })}
+            </>
+          )}
+
+          {!growEnabled && sidebarOpen && (
+            <Link
+              to="/grow"
+              className="mx-1 mt-4 block bg-gradient-to-r from-orange-500/10 to-orange-600/5 border border-orange-500/20 rounded-xl p-3 hover:border-orange-500/40 transition"
+              data-testid="grow-teaser-sidebar"
+            >
+              <div className="flex items-center gap-2 mb-1">
+                <Rocket className="w-4 h-4 text-orange-400" />
+                <span className="text-xs font-bold text-orange-400">WAZA Grow</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-orange-500/20 text-orange-300">SOON</span>
+              </div>
+              <p className="text-[11px] text-text-muted leading-tight">Pubs Facebook gerees par l'IA</p>
+            </Link>
+          )}
         </nav>
 
         {/* User section */}

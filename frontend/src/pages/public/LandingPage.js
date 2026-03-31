@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { MessageCircle, Bot, Calendar, DollarSign, Megaphone, Check, ArrowRight } from 'lucide-react';
+import { MessageCircle, Bot, Calendar, DollarSign, Megaphone, Check, ArrowRight, Rocket } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import DemoModal from '@/components/DemoModal';
 import LanguageToggle from '@/components/LanguageToggle';
@@ -48,6 +48,7 @@ const LandingPage = () => {
               <div className="hidden md:flex items-center space-x-6">
                 <Link to="/about" className="text-sm text-text-secondary hover:text-primary transition" data-testid="nav-about-link">{t('nav.about')}</Link>
                 <Link to="/contact" className="text-sm text-text-secondary hover:text-primary transition" data-testid="nav-contact-link">{t('nav.contact')}</Link>
+                <Link to="/grow" className="text-sm text-orange-400 hover:text-orange-300 transition font-medium" data-testid="nav-grow-link">WAZA Grow</Link>
               </div>
               <div className="flex items-center space-x-3">
                 <LanguageToggle />
@@ -154,6 +155,31 @@ const LandingPage = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* WAZA Grow Teaser */}
+      <section className="py-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-r from-orange-500/5 via-transparent to-orange-500/5" />
+        <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="bg-surface border border-orange-500/20 rounded-2xl p-8 sm:p-12 text-center" data-testid="grow-teaser-banner">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/10 text-orange-400 text-sm font-bold mb-4">
+              <Rocket className="w-4 h-4" /> NOUVEAU
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
+              WAZA <span className="text-orange-400">Grow</span>
+            </h2>
+            <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8">
+              Vos publicites Facebook et Instagram gerees par l'IA. Creez une campagne en 3 minutes, l'IA optimise 24h/24.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link to="/grow">
+                <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-lg px-8" data-testid="grow-teaser-cta">
+                  Decouvrir WAZA Grow <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+            </div>
           </div>
         </div>
       </section>

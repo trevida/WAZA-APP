@@ -33,6 +33,14 @@ import BillingPage from "@/pages/dashboard/BillingPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
 import OnboardingPage from "@/pages/dashboard/OnboardingPage";
 
+// Grow pages
+import GrowOverview from "@/pages/dashboard/grow/GrowOverview";
+import GrowCampaigns from "@/pages/dashboard/grow/GrowCampaigns";
+import GrowCampaignNew from "@/pages/dashboard/grow/GrowCampaignNew";
+import GrowCampaignDetail from "@/pages/dashboard/grow/GrowCampaignDetail";
+import GrowConnect from "@/pages/dashboard/grow/GrowConnect";
+import GrowPricingPage from "@/pages/public/GrowPricingPage";
+
 // Admin pages
 import AdminLoginPage from "@/pages/admin/AdminLoginPage";
 import AdminLayout from "@/pages/admin/AdminLayout";
@@ -121,6 +129,7 @@ function App() {
           />
           <Route path="/forgot-password" element={<ForgotPasswordPage />} />
           <Route path="/verify-email" element={<VerifyEmailPage />} />
+          <Route path="/grow" element={<GrowPricingPage />} />
 
           {/* Dashboard routes */}
           <Route
@@ -145,6 +154,11 @@ function App() {
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="billing" element={<BillingPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="grow" element={<GrowOverview />} />
+            <Route path="grow/campaigns" element={<GrowCampaigns />} />
+            <Route path="grow/campaigns/new" element={<GrowCampaignNew />} />
+            <Route path="grow/campaigns/:id" element={<GrowCampaignDetail />} />
+            <Route path="grow/connect" element={<GrowConnect />} />
           </Route>
 
           {/* Admin routes */}
