@@ -29,6 +29,7 @@ class ConversationStatus(str, enum.Enum):
 class BroadcastStatus(str, enum.Enum):
     DRAFT = "draft"
     SCHEDULED = "scheduled"
+    SENDING = "sending"
     SENT = "sent"
 
 class SubscriptionStatus(str, enum.Enum):
@@ -158,6 +159,16 @@ class Broadcast(Base):
     sent_at = Column(DateTime)
     total_sent = Column(Integer, default=0)
     total_delivered = Column(Integer, default=0)
+    # A/B Testing fields
+    ab_test_enabled = Column(Boolean, default=False)
+    variant_b_template = Column(Text)
+    variant_a_sent = Column(Integer, default=0)
+    variant_a_delivered = Column(Integer, default=0)
+    variant_a_replied = Column(Integer, default=0)
+    variant_b_sent = Column(Integer, default=0)
+    variant_b_delivered = Column(Integer, default=0)
+    variant_b_replied = Column(Integer, default=0)
+    winner = Column(String)  # 'A' or 'B' or null
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     
     # Relationships

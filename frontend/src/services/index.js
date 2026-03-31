@@ -157,6 +157,16 @@ export const broadcastService = {
     const response = await api.get(`/broadcasts/${id}/stats`);
     return response.data;
   },
+
+  delete: async (id) => {
+    const response = await api.delete(`/broadcasts/${id}`);
+    return response.data;
+  },
+
+  cancelSchedule: async (id) => {
+    const response = await api.post(`/broadcasts/${id}/cancel-schedule`);
+    return response.data;
+  },
 };
 
 export const analyticsService = {
