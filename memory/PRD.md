@@ -18,7 +18,7 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 
 ---
 
-## Implementation Status
+## Implementation Status — ALL PHASES COMPLETE
 
 ### Phase 1-6 : Core (Auth, Dashboard, Admin, Legal, Demo, Email Verif, i18n) — COMPLETE
 ### Phase 7 : Analytics Avances — COMPLETE
@@ -28,23 +28,22 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 ### Phase 11 : WAZA Grow — AI Facebook Ads Manager — COMPLETE
 ### Phase 12 : Traduction pages legales i18n (FR/EN) — COMPLETE
 ### Phase 13 : API Rate Limiting (slowapi) — COMPLETE
+### Phase 14 : A/B Testing Broadcasts — COMPLETE
+### Phase 15 : Broadcasts Programmes (Scheduling) — COMPLETE
 
-### Phase 14 : A/B Testing Broadcasts — COMPLETE (Feb 2026)
-- [x] Model: ab_test_enabled, variant_b_template, variant_a/b_sent/delivered/replied, winner
-- [x] Backend: Create A/B broadcast, validate variant_b required, stats with ab_test data
-- [x] Frontend: 4-step wizard (Agent > Message+A/B > Audience > Send Mode)
-- [x] A/B toggle with variant B textarea, 50/50 split info, summary preview
-- [x] Stats panel with variant comparison and winner badge
-- [x] Testing: 13/13 backend, 100% frontend — ALL PASSING
-
-### Phase 15 : Broadcasts Programmes (Scheduling) — COMPLETE (Feb 2026)
-- [x] Backend: scheduled_at validation (future only), status=scheduled on creation
-- [x] Backend: cancel-schedule endpoint (back to draft), delete broadcast
-- [x] Backend: BroadcastStatus.SENDING added
-- [x] Backend: check_scheduled_broadcasts task (checks pending scheduled)
-- [x] Frontend: Send mode step (now vs scheduled), datetime picker
-- [x] Frontend: Scheduled badge, cancel action, broadcast list with all statuses
-- [x] Testing: included in Phase 14 tests — ALL PASSING
+### Phase 16 : Team Collaboration — COMPLETE (Feb 2026)
+- [x] Model: WorkspaceMember (workspace_id, user_id, email, role, status, invite_token, invited_by)
+- [x] Roles: owner (auto), admin, member
+- [x] Invitation: POST /api/workspaces/{id}/members/invite (email + role, returns token)
+- [x] Accept: POST /api/workspaces/invitations/{token}/accept
+- [x] Update role: PUT /api/workspaces/{id}/members/{member_id}
+- [x] Remove: DELETE /api/workspaces/{id}/members/{member_id}
+- [x] My invitations: GET /api/workspaces/my-invitations
+- [x] Workspaces list: includes owned + shared workspaces
+- [x] Frontend: /dashboard/team page with members list, invite modal, role management
+- [x] Sidebar: "Equipe" link between Analytics and Facturation
+- [x] Protections: self-invite, duplicate, invalid role, admin-only actions
+- [x] Testing: 16/16 backend, 100% frontend — ALL PASSING
 
 ---
 
@@ -55,12 +54,11 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 - [ ] WhatsApp Business API reel (remplacer mock)
 - [ ] CinetPay/Flutterwave SDK reel
 - [ ] Meta Marketing API reel pour WAZA Grow (actuellement MOCK)
-
-### P2 — Futur
-- [ ] Team collaboration (multi-users par workspace)
+- [ ] Email d'invitation reel (actuellement token retourne dans API, pas d'email envoye)
 
 ### Notes techniques
 - WhatsApp send_message est MOCK
 - Reply rate simulation est MOCK (20-40% aleatoire)
-- Celery/Redis non disponibles — BackgroundTasks FastAPI utilise
-- check_scheduled_broadcasts necessite un cron job ou Celery beat en production
+- Email invitations sont MOCK (token retourne, pas d'email)
+- check_scheduled_broadcasts necessite un cron job en production
+- workspace_members utilise VARCHAR pour role/status (pas de PostgreSQL enum)
