@@ -70,10 +70,26 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 - [x] Variables d'environnement documentees
 
 ### Testing (COMPLETE)
-- [x] Backend : 17/17 API endpoints testes et fonctionnels (100%)
+- [x] Backend : 17/17 API endpoints testes et fonctionnels (100%) - iteration 1
+- [x] Admin Backend : 21/21 tests passes (100%) - iteration 2
 - [x] Frontend : Toutes les pages chargent correctement (100%)
-- [x] Test file : /app/backend/tests/test_waza_api.py
-- [x] Test report : /app/test_reports/iteration_1.json
+- [x] Admin Frontend : Toutes les pages admin fonctionnelles (100%)
+- [x] Securite : Non-admin bloque sur /admin/* (403)
+- [x] Test files : /app/backend/tests/test_waza_api.py, test_admin_api.py
+- [x] Test reports : /app/test_reports/iteration_1.json, iteration_2.json
+
+### Phase 4 : Admin Dashboard (COMPLETE)
+- [x] Modele User : champ is_superadmin ajoute + migration Alembic
+- [x] Seed superadmin : admin@waza.africa / WazaAdmin2026!
+- [x] Backend : 11 endpoints admin (/stats, /users, /revenues, /workspaces, /messages, etc.)
+- [x] Middleware get_current_superadmin pour proteger toutes les routes admin
+- [x] Frontend Admin Login : /admin/login avec theme or (#FFD600)
+- [x] Frontend Admin Layout : sidebar + top bar avec KPIs en temps reel
+- [x] Frontend Admin Overview : KPI cards, Messages chart, Plan PieChart, Recent signups, Top workspaces
+- [x] Frontend Admin Users : table paginee + recherche + filtre plan + actions (suspend/plan/delete) + modal detail
+- [x] Frontend Admin Revenues : MRR cards, BarChart par plan, table transactions, export CSV
+- [x] Frontend Admin Workspaces : table avec owner, WhatsApp status, agents/contacts
+- [x] Frontend Admin Settings : mode maintenance, annonces, limites plans
 
 ---
 
