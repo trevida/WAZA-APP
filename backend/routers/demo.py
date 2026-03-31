@@ -37,6 +37,9 @@ Tu simules un agent commercial IA pour une boutique de mode africaine appelée "
 @router.post("/chat", response_model=DemoChatResponse)
 async def demo_chat(request: DemoChatRequest):
     """Public demo chat endpoint - no auth required"""
+    if not request.message or not request.message.strip():
+        raise HTTPException(status_code=422, detail="Le message ne peut pas être vide.")
+
     try:
         session_id = request.session_id or str(uuid.uuid4())
 

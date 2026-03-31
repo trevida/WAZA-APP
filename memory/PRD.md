@@ -72,11 +72,12 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 ### Testing (COMPLETE)
 - [x] Backend : 17/17 API endpoints testes et fonctionnels (100%) - iteration 1
 - [x] Admin Backend : 21/21 tests passes (100%) - iteration 2
+- [x] Legal Pages & Demo : 100% backend + 100% frontend - iteration 3
 - [x] Frontend : Toutes les pages chargent correctement (100%)
 - [x] Admin Frontend : Toutes les pages admin fonctionnelles (100%)
 - [x] Securite : Non-admin bloque sur /admin/* (403)
-- [x] Test files : /app/backend/tests/test_waza_api.py, test_admin_api.py
-- [x] Test reports : /app/test_reports/iteration_1.json, iteration_2.json
+- [x] Test files : /app/backend/tests/test_waza_api.py, test_admin_api.py, test_demo_chat.py
+- [x] Test reports : /app/test_reports/iteration_1.json, iteration_2.json, iteration_3.json
 
 ### Phase 4 : Admin Dashboard (COMPLETE)
 - [x] Modele User : champ is_superadmin ajoute + migration Alembic
@@ -92,17 +93,29 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 - [x] Frontend Admin Settings : mode maintenance, annonces, limites plans, configuration paiements (Stripe/CinetPay/Virement)
 - [x] Backend Payment Config : model PaymentConfig + GET/PUT /api/admin/payment-config avec masquage cles + hot-reload env vars
 
+### Phase 5 : Pages Legales & Demo Interactive (COMPLETE - Feb 2026)
+- [x] Page Confidentialite (/privacy) - contenu complet en francais
+- [x] Page Conditions d'Utilisation (/terms) - contenu complet en francais
+- [x] Page Contact (/contact) - formulaire + infos entreprise (soumission MOCKEE)
+- [x] Page A propos (/about) - mission, valeurs, stats, equipe
+- [x] Navbar mise a jour - liens "A propos" et "Contact"
+- [x] Footer mis a jour - liens vers 4 pages legales + copyright
+- [x] Demo Interactive Modal - simulateur WhatsApp avec IA Claude
+- [x] Backend proxy /api/demo/chat - endpoint public relayant vers Claude AI
+- [x] Validation message vide (422) sur /api/demo/chat
+
 ---
 
 ## Prioritized Backlog
 
 ### P0 (Must Have)
-- All Phase 1-3 features DONE
+- All Phase 1-5 features DONE
 
 ### P1 (Should Have)
 - [ ] Email verification flow (SMTP integration)
 - [ ] WhatsApp Business API real integration (replace mock)
 - [ ] CinetPay real integration (replace mock)
+- [ ] Flutterwave real SDK integration
 - [ ] Celery beat for scheduled broadcasts
 - [ ] Real-time conversation updates (WebSocket)
 
@@ -115,3 +128,7 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 - [ ] Team collaboration (multiple users per workspace)
 - [ ] A/B testing for broadcast messages
 - [ ] API rate limiting
+- [ ] Audit log for admin actions
+- [ ] Plan limits editing via Admin dashboard
+- [ ] Advanced analytics dashboard
+- [ ] PDF export for admin reports
