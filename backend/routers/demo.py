@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, Request
 from pydantic import BaseModel
 from typing import List, Optional
 from services.claude_ai import claude_service
@@ -7,12 +7,15 @@ from sqlalchemy.orm import Session
 from fastapi import Depends
 from models import DemoSession
 from datetime import datetime, timezone
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import uuid
 import logging
 
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/demo", tags=["demo"])
+limiter = Limiter(key_func=get_remote_address)
 
 class DemoChatRequest(BaseModel):
     message: str
@@ -40,13 +43,14 @@ Tu simules un agent commercial IA pour une boutique de mode africaine appelée "
 """
 
 @router.post("/chat", response_model=DemoChatResponse)
-async def demo_chat(request: DemoChatRequest, db: Session = Depends(get_db)):
+@limiter.limit("15/minute")
+async def demo_chat(request: Request, body: DemoChatRequest, db: Session = Depends(get_db)):
     """Public demo chat endpoint - no auth required"""
-    if not request.message or not request.message.strip():
+    if not body.message or not body.message.strip():
         raise HTTPException(status_code=422, detail="Le message ne peut pas être vide.")
 
     try:
-        session_id = request.session_id or str(uuid.uuid4())
+        session_id = body.session_id or str(uuid.uuid4())
 
         # Track demo session
         try:
@@ -57,7 +61,7 @@ async def demo_chat(request: DemoChatRequest, db: Session = Depends(get_db)):
             else:
                 demo_session = DemoSession(
                     session_id=session_id,
-                    first_message=request.message[:200],
+                    first_message=body.message[:200],
                     messages_count=1,
                 )
                 db.add(demo_session)
@@ -68,8 +72,8 @@ async def demo_chat(request: DemoChatRequest, db: Session = Depends(get_db)):
 
         reply = await claude_service.generate_response(
             system_prompt=DEMO_SYSTEM_PROMPT,
-            conversation_history=request.conversation_history,
-            user_message=request.message,
+            conversation_history=body.conversation_history,
+            user_message=body.message,
             session_id=session_id,
         )
 

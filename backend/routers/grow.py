@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy.orm import Session
 from sqlalchemy import func
 from database import get_db
@@ -12,12 +12,15 @@ from services.claude_ai import claude_service
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime, timezone, timedelta
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import uuid
 import logging
 import random
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/grow", tags=["WAZA Grow"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 # === Schemas ===
@@ -74,7 +77,8 @@ async def get_grow_flags(db: Session = Depends(get_db)):
 
 # === Waitlist ===
 @router.post("/waitlist")
-async def join_waitlist(body: WaitlistRequest, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def join_waitlist(request: Request, body: WaitlistRequest, db: Session = Depends(get_db)):
     existing = db.query(GrowWaitlist).filter(GrowWaitlist.email == body.email).first()
     if existing:
         return {"message": "Vous êtes déjà sur la liste d'attente!", "already_registered": True}

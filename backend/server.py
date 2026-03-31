@@ -1,5 +1,9 @@
-from fastapi import FastAPI, APIRouter
+from fastapi import FastAPI, APIRouter, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from dotenv import load_dotenv
 from pathlib import Path
 import os
@@ -20,12 +24,17 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Rate limiter
+limiter = Limiter(key_func=get_remote_address, default_limits=["120/minute"])
+
 # Create FastAPI app
 app = FastAPI(
     title="WAZA API",
     description="AI WhatsApp Agent Platform for African Businesses",
     version="1.0.0"
 )
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # Create API router with /api prefix
 api_router = APIRouter(prefix="/api")
@@ -63,7 +72,15 @@ async def health_check():
         "status": "healthy",
         "service": "waza-backend",
         "database": "connected",
-        "redis": "connected"
+        "redis": "connected",
+        "rate_limits": {
+            "default": "120/minute",
+            "auth_register": "5/minute",
+            "auth_login": "10/minute",
+            "auth_forgot_password": "3/minute",
+            "demo_chat": "15/minute",
+            "grow_waitlist": "5/minute",
+        }
     }
 
 # Include API router in main app
@@ -101,13 +118,13 @@ async def startup_event():
     logger.info("WAZA Backend Starting Up")
     logger.info(f"Environment: {settings.ENVIRONMENT}")
     logger.info("=" * 60)
-    logger.info(f"Database: PostgreSQL")
+    logger.info("Database: PostgreSQL")
     logger.info(f"Redis: {settings.REDIS_URL}")
     logger.info(f"Frontend URL: {settings.FRONTEND_URL}")
     logger.info(f"CORS Origins: {cors_origins}")
-    logger.info(f"AI Service: Claude Sonnet 4.5 (Emergent LLM)")
-    logger.info(f"WhatsApp: Mock Mode")
-    logger.info(f"Payment: Stripe (Active) | CinetPay (Mock)")
+    logger.info("AI Service: Claude Sonnet 4.5 (Emergent LLM)")
+    logger.info("WhatsApp: Mock Mode")
+    logger.info("Payment: Stripe (Active) | CinetPay (Mock)")
     logger.info("=" * 60)
 
 # Shutdown event

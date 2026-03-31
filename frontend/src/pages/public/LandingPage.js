@@ -165,18 +165,18 @@ const LandingPage = () => {
         <div className="relative max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="bg-surface border border-orange-500/20 rounded-2xl p-8 sm:p-12 text-center" data-testid="grow-teaser-banner">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-orange-500/10 text-orange-400 text-sm font-bold mb-4">
-              <Rocket className="w-4 h-4" /> NOUVEAU
+              <Rocket className="w-4 h-4" /> {t('landing.grow_teaser_new')}
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold tracking-tight mb-4">
-              WAZA <span className="text-orange-400">Grow</span>
+              {t('landing.grow_teaser_title').split(' ')[0]} <span className="text-orange-400">{t('landing.grow_teaser_title').split(' ').slice(1).join(' ')}</span>
             </h2>
             <p className="text-lg text-text-secondary max-w-2xl mx-auto mb-8">
-              Vos publicites Facebook et Instagram gerees par l'IA. Creez une campagne en 3 minutes, l'IA optimise 24h/24.
+              {t('landing.grow_teaser_desc')}
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link to="/grow">
                 <Button size="lg" className="bg-orange-500 hover:bg-orange-600 text-lg px-8" data-testid="grow-teaser-cta">
-                  Decouvrir WAZA Grow <ArrowRight className="ml-2 w-5 h-5" />
+                  {t('landing.grow_teaser_cta')} <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
             </div>

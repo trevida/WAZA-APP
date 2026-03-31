@@ -1,42 +1,29 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { MessageCircle, ArrowLeft, Target, Users, Globe, Zap } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import LanguageToggle from '@/components/LanguageToggle';
 
 const AboutPage = () => {
+  const { t } = useTranslation();
+
   const values = [
-    {
-      icon: <Target className="w-6 h-6 text-primary" />,
-      title: 'Impact local',
-      description: 'Nous construisons des outils pensés pour les réalités et les besoins des entreprises africaines.'
-    },
-    {
-      icon: <Zap className="w-6 h-6 text-primary" />,
-      title: 'Innovation IA',
-      description: "Nous exploitons les dernières avancées en intelligence artificielle pour créer des agents conversationnels performants."
-    },
-    {
-      icon: <Users className="w-6 h-6 text-primary" />,
-      title: 'Accessibilité',
-      description: 'Des tarifs adaptés au marché africain, du plan gratuit au plan enterprise.'
-    },
-    {
-      icon: <Globe className="w-6 h-6 text-primary" />,
-      title: 'Vision panafricaine',
-      description: "Nous visons à connecter les entreprises de tout le continent avec leurs clients via WhatsApp."
-    }
+    { icon: <Target className="w-6 h-6 text-primary" />, title: t('about.value_local_title'), description: t('about.value_local_desc') },
+    { icon: <Zap className="w-6 h-6 text-primary" />, title: t('about.value_innovation_title'), description: t('about.value_innovation_desc') },
+    { icon: <Users className="w-6 h-6 text-primary" />, title: t('about.value_accessibility_title'), description: t('about.value_accessibility_desc') },
+    { icon: <Globe className="w-6 h-6 text-primary" />, title: t('about.value_vision_title'), description: t('about.value_vision_desc') },
   ];
 
   const stats = [
-    { value: '15+', label: 'Pays couverts' },
-    { value: '500+', label: 'Entreprises actives' },
-    { value: '2M+', label: 'Messages traités' },
-    { value: '24/7', label: 'Disponibilité agents' }
+    { value: '15+', label: t('about.stat_countries') },
+    { value: '500+', label: t('about.stat_businesses') },
+    { value: '2M+', label: t('about.stat_messages') },
+    { value: '24/7', label: t('about.stat_availability') },
   ];
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navbar */}
       <nav className="glass-card border-b border-border sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
@@ -44,56 +31,38 @@ const AboutPage = () => {
               <MessageCircle className="w-8 h-8 text-primary" />
               <span className="text-2xl font-heading font-black">WAZA</span>
             </Link>
-            <div className="flex items-center space-x-4">
-              <Link to="/login">
-                <Button variant="ghost">Connexion</Button>
-              </Link>
-              <Link to="/register">
-                <Button>Essai gratuit</Button>
-              </Link>
+            <div className="flex items-center space-x-3">
+              <LanguageToggle />
+              <Link to="/login"><Button variant="ghost">{t('nav.login')}</Button></Link>
+              <Link to="/register"><Button>{t('nav.register')}</Button></Link>
             </div>
           </div>
         </div>
       </nav>
 
-      {/* Content */}
       <div data-testid="about-page">
-        {/* Hero */}
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
           <Link to="/" className="inline-flex items-center text-text-muted hover:text-primary transition mb-8">
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Retour à l'accueil
+            <ArrowLeft className="w-4 h-4 mr-2" />{t('common.back_home')}
           </Link>
-
           <h1 className="text-4xl sm:text-5xl font-black mb-6 bg-gradient-to-r from-text-primary to-primary bg-clip-text text-transparent">
-            À propos de WAZA
+            {t('about.title')}
           </h1>
-          <p className="text-xl text-text-secondary leading-relaxed max-w-3xl">
-            WAZA est née d'un constat simple : les entreprises africaines communiquent massivement
-            via WhatsApp, mais manquent d'outils pour automatiser et optimiser ces échanges.
-            Nous avons créé la première plateforme d'agents IA WhatsApp pensée pour l'Afrique.
-          </p>
+          <p className="text-xl text-text-secondary leading-relaxed max-w-3xl">{t('about.intro')}</p>
         </div>
 
-        {/* Mission */}
         <div className="bg-surface/50 py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-6">Notre mission</h2>
-            <p className="text-lg text-text-secondary leading-relaxed">
-              Démocratiser l'accès à l'intelligence artificielle pour les entreprises africaines.
-              Avec WAZA, chaque PME peut déployer un agent commercial, un assistant de rappels,
-              ou un outil de recouvrement intelligent sur WhatsApp — en quelques minutes,
-              sans compétences techniques requises.
-            </p>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6">{t('about.mission_title')}</h2>
+            <p className="text-lg text-text-secondary leading-relaxed">{t('about.mission_text')}</p>
           </div>
         </div>
 
-        {/* Stats */}
         <div className="py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-              {stats.map((stat, index) => (
-                <div key={index} className="text-center">
+              {stats.map((stat, i) => (
+                <div key={i} className="text-center">
                   <div className="text-3xl sm:text-4xl font-black text-primary mb-1">{stat.value}</div>
                   <div className="text-text-secondary text-sm">{stat.label}</div>
                 </div>
@@ -102,16 +71,13 @@ const AboutPage = () => {
           </div>
         </div>
 
-        {/* Values */}
         <div className="bg-surface/50 py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-10">Nos valeurs</h2>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-10">{t('about.values_title')}</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {values.map((value, index) => (
-                <div key={index} className="bg-surface border border-border rounded-2xl p-6 hover-lift transition-all">
-                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-4">
-                    {value.icon}
-                  </div>
+              {values.map((value, i) => (
+                <div key={i} className="bg-surface border border-border rounded-2xl p-6 hover-lift transition-all">
+                  <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center mb-4">{value.icon}</div>
                   <h3 className="text-lg font-bold mb-2">{value.title}</h3>
                   <p className="text-text-secondary text-sm">{value.description}</p>
                 </div>
@@ -120,45 +86,26 @@ const AboutPage = () => {
           </div>
         </div>
 
-        {/* Team */}
         <div className="py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-6">L'équipe</h2>
-            <p className="text-lg text-text-secondary leading-relaxed mb-8">
-              WAZA est développé par <strong className="text-text-primary">Massudom Silicon Valley</strong>,
-              une startup tech basée à Bandjoun, Cameroun. Notre équipe combine expertise en IA,
-              développement logiciel et connaissance approfondie du marché africain.
-            </p>
-            <Link to="/contact">
-              <Button className="glow-green" data-testid="about-contact-button">
-                Rejoignez l'aventure
-              </Button>
-            </Link>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-6">{t('about.team_title')}</h2>
+            <p className="text-lg text-text-secondary leading-relaxed mb-8">{t('about.team_text')}</p>
+            <Link to="/contact"><Button className="glow-green" data-testid="about-contact-button">{t('about.team_cta')}</Button></Link>
           </div>
         </div>
 
-        {/* CTA */}
         <div className="bg-surface/50 py-16">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h2 className="text-2xl sm:text-3xl font-bold mb-4">
-              Prêt à automatiser votre WhatsApp ?
-            </h2>
-            <p className="text-text-secondary mb-8">
-              Rejoignez les 500+ entreprises africaines qui utilisent WAZA
-            </p>
-            <Link to="/register">
-              <Button size="lg" className="glow-green" data-testid="about-cta-button">
-                Commencer gratuitement
-              </Button>
-            </Link>
+            <h2 className="text-2xl sm:text-3xl font-bold mb-4">{t('about.cta_title')}</h2>
+            <p className="text-text-secondary mb-8">{t('about.cta_subtitle')}</p>
+            <Link to="/register"><Button size="lg" className="glow-green" data-testid="about-cta-button">{t('about.cta_button')}</Button></Link>
           </div>
         </div>
       </div>
 
-      {/* Footer */}
       <footer className="border-t border-border py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center text-text-muted text-sm">
-          &copy; {new Date().getFullYear()} WAZA by Massudom Silicon Valley. Tous droits réservés.
+          &copy; {new Date().getFullYear()} {t('footer.copyright')}
         </div>
       </footer>
     </div>

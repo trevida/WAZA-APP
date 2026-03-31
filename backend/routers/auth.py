@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
 from sqlalchemy.orm import Session
 from database import get_db
 from models import User
@@ -7,17 +7,21 @@ from utils.auth import hash_password, verify_password, create_access_token, crea
 from services.email_service import email_service
 from datetime import datetime, timedelta, timezone
 from pydantic import BaseModel, EmailStr
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 import logging
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+limiter = Limiter(key_func=get_remote_address)
 
 
 class ResendVerificationRequest(BaseModel):
     email: EmailStr
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
-async def register(user_data: UserCreate, db: Session = Depends(get_db)):
+@limiter.limit("5/minute")
+async def register(request: Request, user_data: UserCreate, db: Session = Depends(get_db)):
     """
     Register a new user account
     """
@@ -60,7 +64,8 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     )
 
 @router.post("/login", response_model=TokenResponse)
-async def login(credentials: UserLogin, db: Session = Depends(get_db)):
+@limiter.limit("10/minute")
+async def login(request: Request, credentials: UserLogin, db: Session = Depends(get_db)):
     """
     Login with email and password
     """
@@ -144,11 +149,12 @@ async def verify_email(request: VerifyEmailRequest, db: Session = Depends(get_db
     return {"message": "Email verified successfully"}
 
 @router.post("/forgot-password")
-async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+async def forgot_password(request: Request, body: ForgotPasswordRequest, db: Session = Depends(get_db)):
     """
     Request password reset
     """
-    user = db.query(User).filter(User.email == request.email).first()
+    user = db.query(User).filter(User.email == body.email).first()
     
     if user:
         # Generate reset token
@@ -189,9 +195,10 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
 
 
 @router.post("/resend-verification")
-async def resend_verification(request: ResendVerificationRequest, db: Session = Depends(get_db)):
+@limiter.limit("3/minute")
+async def resend_verification(request: Request, body: ResendVerificationRequest, db: Session = Depends(get_db)):
     """Resend verification email"""
-    user = db.query(User).filter(User.email == request.email).first()
+    user = db.query(User).filter(User.email == body.email).first()
 
     if user and not user.is_verified:
         token = generate_verification_token()
