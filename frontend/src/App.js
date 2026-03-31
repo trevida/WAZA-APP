@@ -6,7 +6,9 @@ import useAuthStore from "@/store/authStore";
 import "@/i18n";
 
 // Public pages
-import LandingPage from "@/pages/public/LandingPage";
+// Landing page: swap ComingSoonPage ↔ LandingPage to revert
+// Original: import LandingPage from "@/pages/public/LandingPage";
+import LandingPage from "@/pages/public/ComingSoonPage";
 import LoginPage from "@/pages/public/LoginPage";
 import RegisterPage from "@/pages/public/RegisterPage";
 import ForgotPasswordPage from "@/pages/public/ForgotPasswordPage";
