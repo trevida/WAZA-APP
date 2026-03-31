@@ -1,4 +1,4 @@
-from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text, ARRAY, Enum as SQLEnum
+from sqlalchemy import Column, String, Integer, Boolean, DateTime, ForeignKey, Text, ARRAY, Enum as SQLEnum, Float, JSON
 from sqlalchemy.orm import relationship
 from database import Base
 from datetime import datetime, timezone
@@ -262,3 +262,94 @@ class AuditLog(Base):
     details = Column(Text)
     ip_address = Column(String)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)
+
+
+
+# ==================== WAZA GROW MODELS ====================
+
+class GrowPlanType(str, enum.Enum):
+    STARTER = "starter"
+    PRO = "pro"
+    AGENCY = "agency"
+
+class GrowCampaignStatus(str, enum.Enum):
+    DRAFT = "draft"
+    ACTIVE = "active"
+    PAUSED = "paused"
+    COMPLETED = "completed"
+
+class GrowObjective(str, enum.Enum):
+    AWARENESS = "awareness"
+    TRAFFIC = "traffic"
+    CONVERSIONS = "conversions"
+    MESSAGES = "messages"
+
+
+class FeatureFlag(Base):
+    __tablename__ = "feature_flags"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    key = Column(String, unique=True, nullable=False, index=True)
+    value = Column(Boolean, default=False)
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class GrowWaitlist(Base):
+    __tablename__ = "grow_waitlist"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    email = Column(String, unique=True, nullable=False, index=True)
+    name = Column(String)
+    company = Column(String)
+    phone = Column(String)
+    user_id = Column(String, ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    notified_at = Column(DateTime, nullable=True)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class GrowSubscription(Base):
+    __tablename__ = "grow_subscriptions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    plan = Column(SQLEnum(GrowPlanType), nullable=False)
+    status = Column(SQLEnum(SubscriptionStatus), default=SubscriptionStatus.ACTIVE)
+    price_fcfa = Column(Integer, nullable=False)
+    payment_provider = Column(SQLEnum(PaymentProvider))
+    current_period_start = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    current_period_end = Column(DateTime)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class FacebookAdAccount(Base):
+    __tablename__ = "facebook_ad_accounts"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    fb_account_id = Column(String)
+    fb_account_name = Column(String)
+    access_token = Column(String)
+    currency = Column(String, default="XAF")
+    timezone_name = Column(String, default="Africa/Douala")
+    connected_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    is_active = Column(Boolean, default=True)
+
+
+class GrowCampaign(Base):
+    __tablename__ = "grow_campaigns"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    user_id = Column(String, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    fb_campaign_id = Column(String)
+    name = Column(String, nullable=False)
+    objective = Column(SQLEnum(GrowObjective), nullable=False)
+    budget_fcfa = Column(Integer, default=0)
+    budget_type = Column(String, default="daily")  # daily or lifetime
+    status = Column(SQLEnum(GrowCampaignStatus), default=GrowCampaignStatus.DRAFT)
+    start_date = Column(DateTime)
+    end_date = Column(DateTime)
+    target_audience = Column(JSON, default=dict)
+    ad_creative = Column(JSON, default=dict)
+    results = Column(JSON, default=dict)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

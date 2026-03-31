@@ -6,7 +6,7 @@ from models import (
     User, Workspace, Agent, Contact, Conversation, Message,
     Broadcast, Subscription, PaymentTransaction, UsageLog,
     PlanType, SubscriptionStatus, ConversationStatus, PaymentConfig,
-    DemoSession, AuditLog
+    DemoSession, AuditLog, FeatureFlag, GrowWaitlist, GrowSubscription, GrowCampaign
 )
 from utils.dependencies import get_current_superadmin
 from utils.auth import hash_password
@@ -864,3 +864,102 @@ async def export_revenues_pdf(
 
     log_audit(db, admin.email, "export_revenues_pdf", "report", None, f"MRR: {mrr} FCFA")
     return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=waza_revenues_report.pdf"})
+
+
+# --- Feature Flags ---
+class FeatureFlagUpdate(BaseModel):
+    grow_enabled: Optional[bool] = None
+    grow_beta: Optional[bool] = None
+
+@router.get("/feature-flags")
+async def get_feature_flags(admin: User = Depends(get_current_superadmin), db: Session = Depends(get_db)):
+    flags = db.query(FeatureFlag).all()
+    result = {}
+    for f in flags:
+        result[f.key] = f.value
+    return result
+
+@router.put("/feature-flags")
+async def update_feature_flags(body: FeatureFlagUpdate, admin: User = Depends(get_current_superadmin), db: Session = Depends(get_db)):
+    updated = []
+    for key, value in [("grow_enabled", body.grow_enabled), ("grow_beta", body.grow_beta)]:
+        if value is not None:
+            flag = db.query(FeatureFlag).filter(FeatureFlag.key == key).first()
+            if not flag:
+                flag = FeatureFlag(key=key, value=value)
+                db.add(flag)
+            else:
+                flag.value = value
+            updated.append(key)
+    db.commit()
+    log_audit(db, admin.email, "feature_flags_updated", "feature_flags", None, f"Updated: {', '.join(updated)}")
+    return {"message": "Feature flags updated", "updated": updated}
+
+
+# --- Admin Waitlist ---
+@router.get("/waitlist")
+async def get_waitlist(admin: User = Depends(get_current_superadmin), db: Session = Depends(get_db)):
+    entries = db.query(GrowWaitlist).order_by(GrowWaitlist.created_at.desc()).all()
+    return {
+        "total": len(entries),
+        "entries": [
+            {"id": e.id, "email": e.email, "name": e.name, "company": e.company,
+             "phone": e.phone, "notified_at": e.notified_at.isoformat() if e.notified_at else None,
+             "created_at": e.created_at.isoformat() if e.created_at else None}
+            for e in entries
+        ]
+    }
+
+@router.post("/waitlist/notify-all")
+async def notify_waitlist(admin: User = Depends(get_current_superadmin), db: Session = Depends(get_db)):
+    entries = db.query(GrowWaitlist).filter(GrowWaitlist.notified_at == None).all()
+    now = datetime.now(timezone.utc)
+    for e in entries:
+        e.notified_at = now
+        logger.info(f"[MOCK EMAIL] Grow notification to: {e.email}")
+    db.commit()
+    log_audit(db, admin.email, "waitlist_notified", "waitlist", None, f"{len(entries)} notified")
+    return {"message": f"{len(entries)} personnes notifiées"}
+
+@router.get("/waitlist/export-csv")
+async def export_waitlist_csv(admin: User = Depends(get_current_superadmin), db: Session = Depends(get_db)):
+    entries = db.query(GrowWaitlist).order_by(GrowWaitlist.created_at.desc()).all()
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["Email", "Nom", "Entreprise", "Téléphone", "Date inscription", "Notifié"])
+    for e in entries:
+        writer.writerow([e.email, e.name or "", e.company or "", e.phone or "",
+                        e.created_at.strftime("%d/%m/%Y") if e.created_at else "", "Oui" if e.notified_at else "Non"])
+    output.seek(0)
+    return StreamingResponse(io.BytesIO(output.getvalue().encode()), media_type="text/csv",
+                           headers={"Content-Disposition": "attachment; filename=waza_grow_waitlist.csv"})
+
+
+# --- Admin Grow Stats ---
+@router.get("/grow-stats")
+async def get_grow_stats(admin: User = Depends(get_current_superadmin), db: Session = Depends(get_db)):
+    total_subs = db.query(func.count(GrowSubscription.id)).scalar() or 0
+    active_subs = db.query(func.count(GrowSubscription.id)).filter(GrowSubscription.status == SubscriptionStatus.ACTIVE).scalar() or 0
+    total_campaigns = db.query(func.count(GrowCampaign.id)).scalar() or 0
+    waitlist_count = db.query(func.count(GrowWaitlist.id)).scalar() or 0
+
+    # Revenue by plan
+    revenue = db.query(
+        GrowSubscription.plan, func.sum(GrowSubscription.price_fcfa)
+    ).filter(GrowSubscription.status == SubscriptionStatus.ACTIVE).group_by(GrowSubscription.plan).all()
+    revenue_by_plan = {r[0].value: r[1] or 0 for r in revenue}
+    total_revenue = sum(revenue_by_plan.values())
+
+    # Total ad budget managed
+    total_budget = 0
+    campaigns = db.query(GrowCampaign).all()
+    for c in campaigns:
+        r = c.results or {}
+        total_budget += r.get("spend", 0)
+
+    return {
+        "total_subscribers": total_subs, "active_subscribers": active_subs,
+        "total_campaigns": total_campaigns, "waitlist_count": waitlist_count,
+        "grow_mrr": total_revenue, "revenue_by_plan": revenue_by_plan,
+        "total_ad_budget_managed": total_budget,
+    }
