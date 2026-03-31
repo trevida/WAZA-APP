@@ -53,6 +53,7 @@ class User(Base):
     plan = Column(SQLEnum(PlanType), default=PlanType.FREE, nullable=False)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)
+    is_superadmin = Column(Boolean, default=False)
     verification_token = Column(String)
     reset_token = Column(String)
     reset_token_expires = Column(DateTime)

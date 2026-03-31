@@ -1,7 +1,9 @@
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
 
-const API_BASE_URL = 'https://earnest-creativity-production-e3cc.up.railway.app/api';
+const API_BASE_URL = process.env.REACT_APP_BACKEND_URL
+  ? `${process.env.REACT_APP_BACKEND_URL}/api`
+  : 'https://earnest-creativity-production-e3cc.up.railway.app/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -44,7 +46,8 @@ api.interceptors.response.use(
         return api(originalRequest);
       } catch (refreshError) {
         useAuthStore.getState().logout();
-        window.location.href = '/login';
+        const isAdmin = window.location.pathname.startsWith('/admin');
+        window.location.href = isAdmin ? '/admin/login' : '/login';
         return Promise.reject(refreshError);
       }
     }

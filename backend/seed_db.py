@@ -21,11 +21,33 @@ def seed_database():
     db = SessionLocal()
     
     try:
-        # Check if demo user already exists
+        # --- Superadmin ---
+        existing_admin = db.query(User).filter(User.email == "admin@waza.africa").first()
+        if not existing_admin:
+            admin_user = User(
+                email="admin@waza.africa",
+                password_hash=hash_password("WazaAdmin2026!"),
+                full_name="WAZA Admin",
+                company_name="WAZA Platform",
+                phone="+221700000001",
+                country="SN",
+                plan=PlanType.BUSINESS,
+                is_active=True,
+                is_verified=True,
+                is_superadmin=True
+            )
+            db.add(admin_user)
+            db.flush()
+            logger.info("Superadmin created: admin@waza.africa")
+        else:
+            logger.info("Superadmin already exists.")
+
+        # --- Demo user ---
         existing_user = db.query(User).filter(User.email == "demo@waza.africa").first()
         
         if existing_user:
             logger.info("Demo data already exists. Skipping seed.")
+            db.commit()
             return
         
         logger.info("Seeding database with demo data...")

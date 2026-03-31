@@ -58,3 +58,14 @@ async def get_current_active_user(current_user: User = Depends(get_current_user)
             detail="User account is inactive"
         )
     return current_user
+
+async def get_current_superadmin(current_user: User = Depends(get_current_user)) -> User:
+    """
+    Ensure user is a superadmin
+    """
+    if not getattr(current_user, 'is_superadmin', False):
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Superadmin access required"
+        )
+    return current_user

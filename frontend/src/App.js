@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/sonner";
@@ -26,6 +26,15 @@ import AnalyticsPage from "@/pages/dashboard/AnalyticsPage";
 import BillingPage from "@/pages/dashboard/BillingPage";
 import SettingsPage from "@/pages/dashboard/SettingsPage";
 import OnboardingPage from "@/pages/dashboard/OnboardingPage";
+
+// Admin pages
+import AdminLoginPage from "@/pages/admin/AdminLoginPage";
+import AdminLayout from "@/pages/admin/AdminLayout";
+import AdminOverview from "@/pages/admin/AdminOverview";
+import AdminUsersPage from "@/pages/admin/AdminUsersPage";
+import AdminRevenuesPage from "@/pages/admin/AdminRevenuesPage";
+import AdminWorkspacesPage from "@/pages/admin/AdminWorkspacesPage";
+import AdminSettingsPage from "@/pages/admin/AdminSettingsPage";
 
 import "@/index.css";
 
@@ -58,6 +67,20 @@ const PublicRoute = ({ children }) => {
     return <Navigate to="/dashboard" replace />;
   }
   
+  return children;
+};
+
+// Admin route wrapper
+const AdminRoute = ({ children }) => {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated());
+  const user = useAuthStore((state) => state.user);
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/admin/login" replace />;
+  }
+  if (!user?.is_superadmin) {
+    return <Navigate to="/admin/login" replace />;
+  }
   return children;
 };
 
@@ -109,6 +132,23 @@ function App() {
             <Route path="analytics" element={<AnalyticsPage />} />
             <Route path="billing" element={<BillingPage />} />
             <Route path="settings" element={<SettingsPage />} />
+          </Route>
+
+          {/* Admin routes */}
+          <Route path="/admin/login" element={<AdminLoginPage />} />
+          <Route
+            path="/admin"
+            element={
+              <AdminRoute>
+                <AdminLayout />
+              </AdminRoute>
+            }
+          >
+            <Route index element={<AdminOverview />} />
+            <Route path="users" element={<AdminUsersPage />} />
+            <Route path="revenues" element={<AdminRevenuesPage />} />
+            <Route path="workspaces" element={<AdminWorkspacesPage />} />
+            <Route path="settings" element={<AdminSettingsPage />} />
           </Route>
         </Routes>
       </BrowserRouter>

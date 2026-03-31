@@ -1,0 +1,439 @@
+from fastapi import APIRouter, Depends, HTTPException, status, Query
+from sqlalchemy.orm import Session
+from sqlalchemy import func, case, extract
+from database import get_db
+from models import (
+    User, Workspace, Agent, Contact, Conversation, Message,
+    Broadcast, Subscription, PaymentTransaction, UsageLog,
+    PlanType, SubscriptionStatus, ConversationStatus
+)
+from utils.dependencies import get_current_superadmin
+from utils.auth import hash_password
+from config import PLAN_LIMITS
+from datetime import datetime, timezone, timedelta
+from pydantic import BaseModel
+from typing import Optional
+import logging
+import csv
+import io
+
+logger = logging.getLogger(__name__)
+router = APIRouter(prefix="/admin", tags=["Admin"])
+
+
+# --- Schemas ---
+class UserPlanUpdate(BaseModel):
+    plan: str
+
+class UserSuspendAction(BaseModel):
+    suspend: bool
+
+class PlatformSettings(BaseModel):
+    maintenance_mode: Optional[bool] = None
+    announcement: Optional[str] = None
+
+
+# --- Helper ---
+def user_to_dict(user):
+    return {
+        "id": user.id,
+        "email": user.email,
+        "full_name": user.full_name,
+        "phone": user.phone,
+        "company_name": user.company_name,
+        "country": user.country,
+        "plan": user.plan.value if user.plan else "free",
+        "is_active": user.is_active,
+        "is_verified": user.is_verified,
+        "is_superadmin": getattr(user, 'is_superadmin', False),
+        "created_at": user.created_at.isoformat() if user.created_at else None,
+    }
+
+
+# --- Admin Stats ---
+@router.get("/stats")
+async def get_admin_stats(
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    total_users = db.query(func.count(User.id)).scalar() or 0
+    active_users = db.query(func.count(User.id)).filter(User.is_active == True).scalar() or 0
+    total_workspaces = db.query(func.count(Workspace.id)).scalar() or 0
+    total_agents = db.query(func.count(Agent.id)).scalar() or 0
+    total_contacts = db.query(func.count(Contact.id)).scalar() or 0
+    total_conversations = db.query(func.count(Conversation.id)).scalar() or 0
+    total_messages = db.query(func.count(Message.id)).scalar() or 0
+
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    messages_today = db.query(func.count(Message.id)).filter(Message.created_at >= today).scalar() or 0
+    signups_today = db.query(func.count(User.id)).filter(User.created_at >= today).scalar() or 0
+
+    active_subscriptions = db.query(func.count(Subscription.id)).filter(
+        Subscription.status == SubscriptionStatus.ACTIVE
+    ).scalar() or 0
+
+    mrr = 0
+    for plan_name, limits in PLAN_LIMITS.items():
+        count = db.query(func.count(User.id)).filter(
+            User.plan == PlanType(plan_name)
+        ).scalar() or 0
+        mrr += count * limits["price_fcfa"]
+
+    plan_distribution = {}
+    for plan in PlanType:
+        count = db.query(func.count(User.id)).filter(User.plan == plan).scalar() or 0
+        plan_distribution[plan.value] = count
+
+    return {
+        "total_users": total_users,
+        "active_users": active_users,
+        "signups_today": signups_today,
+        "total_workspaces": total_workspaces,
+        "total_agents": total_agents,
+        "total_contacts": total_contacts,
+        "total_conversations": total_conversations,
+        "total_messages": total_messages,
+        "messages_today": messages_today,
+        "active_subscriptions": active_subscriptions,
+        "mrr_fcfa": mrr,
+        "mrr_usd": round(mrr / 600, 2),
+        "plan_distribution": plan_distribution,
+    }
+
+
+# --- Users ---
+@router.get("/users")
+async def list_users(
+    search: Optional[str] = None,
+    plan: Optional[str] = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    query = db.query(User)
+
+    if search:
+        search_filter = f"%{search}%"
+        query = query.filter(
+            (User.full_name.ilike(search_filter)) |
+            (User.email.ilike(search_filter))
+        )
+
+    if plan:
+        try:
+            query = query.filter(User.plan == PlanType(plan))
+        except ValueError:
+            pass
+
+    total = query.count()
+    users = query.order_by(User.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+
+    users_data = []
+    for u in users:
+        ud = user_to_dict(u)
+        ws_count = db.query(func.count(Workspace.id)).filter(Workspace.user_id == u.id).scalar() or 0
+        msg_count = 0
+        workspaces = db.query(Workspace).filter(Workspace.user_id == u.id).all()
+        for ws in workspaces:
+            msg_count += ws.monthly_message_count or 0
+        ud["workspaces_count"] = ws_count
+        ud["messages_used"] = msg_count
+        users_data.append(ud)
+
+    return {
+        "users": users_data,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "pages": (total + per_page - 1) // per_page,
+    }
+
+
+@router.get("/users/{user_id}")
+async def get_user_detail(
+    user_id: str,
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    ud = user_to_dict(user)
+    workspaces = db.query(Workspace).filter(Workspace.user_id == user.id).all()
+    ud["workspaces"] = [
+        {
+            "id": ws.id,
+            "name": ws.name,
+            "whatsapp_connected": bool(ws.whatsapp_access_token),
+            "agents_count": db.query(func.count(Agent.id)).filter(Agent.workspace_id == ws.id).scalar() or 0,
+            "contacts_count": db.query(func.count(Contact.id)).filter(Contact.workspace_id == ws.id).scalar() or 0,
+            "messages_this_month": ws.monthly_message_count or 0,
+        }
+        for ws in workspaces
+    ]
+
+    payments = db.query(PaymentTransaction).filter(PaymentTransaction.user_id == user.id).order_by(
+        PaymentTransaction.created_at.desc()
+    ).limit(20).all()
+    ud["payments"] = [
+        {
+            "id": p.id,
+            "amount": p.amount,
+            "currency": p.currency,
+            "provider": p.payment_provider.value if p.payment_provider else None,
+            "status": p.payment_status,
+            "created_at": p.created_at.isoformat() if p.created_at else None,
+        }
+        for p in payments
+    ]
+
+    subscriptions = db.query(Subscription).filter(Subscription.user_id == user.id).order_by(
+        Subscription.created_at.desc()
+    ).limit(5).all()
+    ud["subscriptions"] = [
+        {
+            "id": s.id,
+            "plan": s.plan.value,
+            "status": s.status.value if s.status else None,
+            "price_fcfa": s.price_fcfa,
+            "provider": s.payment_provider.value if s.payment_provider else None,
+            "period_start": s.current_period_start.isoformat() if s.current_period_start else None,
+            "period_end": s.current_period_end.isoformat() if s.current_period_end else None,
+        }
+        for s in subscriptions
+    ]
+
+    return ud
+
+
+@router.put("/users/{user_id}/suspend")
+async def suspend_user(
+    user_id: str,
+    body: UserSuspendAction,
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.is_superadmin:
+        raise HTTPException(status_code=400, detail="Cannot suspend a superadmin")
+
+    user.is_active = not body.suspend
+    db.commit()
+    action = "suspended" if body.suspend else "reactivated"
+    logger.info(f"Admin {admin.email} {action} user {user.email}")
+    return {"message": f"User {action} successfully", "is_active": user.is_active}
+
+
+@router.put("/users/{user_id}/plan")
+async def change_user_plan(
+    user_id: str,
+    body: UserPlanUpdate,
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    try:
+        new_plan = PlanType(body.plan)
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid plan: {body.plan}")
+
+    old_plan = user.plan.value
+    user.plan = new_plan
+
+    limits = PLAN_LIMITS.get(new_plan.value, {})
+    for ws in db.query(Workspace).filter(Workspace.user_id == user.id).all():
+        ws.message_limit = limits.get("messages", 100)
+
+    db.commit()
+    logger.info(f"Admin {admin.email} changed user {user.email} plan from {old_plan} to {new_plan.value}")
+    return {"message": f"Plan changed from {old_plan} to {new_plan.value}", "plan": new_plan.value}
+
+
+@router.delete("/users/{user_id}")
+async def delete_user(
+    user_id: str,
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(User.id == user_id).first()
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    if user.is_superadmin:
+        raise HTTPException(status_code=400, detail="Cannot delete a superadmin")
+
+    email = user.email
+    db.delete(user)
+    db.commit()
+    logger.info(f"Admin {admin.email} deleted user {email}")
+    return {"message": f"User {email} deleted successfully"}
+
+
+# --- Revenues ---
+@router.get("/revenues")
+async def get_revenues(
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    transactions = db.query(PaymentTransaction).order_by(
+        PaymentTransaction.created_at.desc()
+    ).limit(100).all()
+
+    transactions_data = []
+    for t in transactions:
+        user = db.query(User).filter(User.id == t.user_id).first()
+        transactions_data.append({
+            "id": t.id,
+            "user_email": user.email if user else "N/A",
+            "user_name": user.full_name if user else "N/A",
+            "amount": t.amount,
+            "currency": t.currency,
+            "provider": t.payment_provider.value if t.payment_provider else None,
+            "status": t.payment_status,
+            "created_at": t.created_at.isoformat() if t.created_at else None,
+        })
+
+    mrr = 0
+    revenue_by_plan = {}
+    for plan_name, limits in PLAN_LIMITS.items():
+        count = db.query(func.count(User.id)).filter(
+            User.plan == PlanType(plan_name)
+        ).scalar() or 0
+        plan_mrr = count * limits["price_fcfa"]
+        mrr += plan_mrr
+        revenue_by_plan[plan_name] = {"users": count, "mrr_fcfa": plan_mrr}
+
+    total_revenue = db.query(func.sum(PaymentTransaction.amount)).filter(
+        PaymentTransaction.payment_status == "paid"
+    ).scalar() or 0
+
+    return {
+        "mrr_fcfa": mrr,
+        "mrr_usd": round(mrr / 600, 2),
+        "total_revenue_fcfa": total_revenue,
+        "revenue_by_plan": revenue_by_plan,
+        "transactions": transactions_data,
+    }
+
+
+# --- Workspaces ---
+@router.get("/workspaces")
+async def list_workspaces(
+    whatsapp_connected: Optional[bool] = None,
+    page: int = Query(1, ge=1),
+    per_page: int = Query(20, ge=1, le=100),
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    query = db.query(Workspace)
+
+    if whatsapp_connected is not None:
+        if whatsapp_connected:
+            query = query.filter(Workspace.whatsapp_access_token.isnot(None))
+        else:
+            query = query.filter(Workspace.whatsapp_access_token.is_(None))
+
+    total = query.count()
+    workspaces = query.order_by(Workspace.created_at.desc()).offset((page - 1) * per_page).limit(per_page).all()
+
+    workspaces_data = []
+    for ws in workspaces:
+        owner = db.query(User).filter(User.id == ws.user_id).first()
+        agents_count = db.query(func.count(Agent.id)).filter(Agent.workspace_id == ws.id).scalar() or 0
+        contacts_count = db.query(func.count(Contact.id)).filter(Contact.workspace_id == ws.id).scalar() or 0
+
+        workspaces_data.append({
+            "id": ws.id,
+            "name": ws.name,
+            "owner_email": owner.email if owner else "N/A",
+            "owner_name": owner.full_name if owner else "N/A",
+            "whatsapp_connected": bool(ws.whatsapp_access_token),
+            "agents_count": agents_count,
+            "contacts_count": contacts_count,
+            "messages_this_month": ws.monthly_message_count or 0,
+            "message_limit": ws.message_limit or 0,
+            "created_at": ws.created_at.isoformat() if ws.created_at else None,
+        })
+
+    return {
+        "workspaces": workspaces_data,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "pages": (total + per_page - 1) // per_page,
+    }
+
+
+# --- Messages ---
+@router.get("/messages")
+async def get_messages_stats(
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    total = db.query(func.count(Message.id)).scalar() or 0
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    today_count = db.query(func.count(Message.id)).filter(Message.created_at >= today).scalar() or 0
+
+    week_ago = today - timedelta(days=7)
+    week_count = db.query(func.count(Message.id)).filter(Message.created_at >= week_ago).scalar() or 0
+
+    month_ago = today - timedelta(days=30)
+    month_count = db.query(func.count(Message.id)).filter(Message.created_at >= month_ago).scalar() or 0
+
+    daily_stats = []
+    for i in range(30):
+        day = today - timedelta(days=29 - i)
+        next_day = day + timedelta(days=1)
+        count = db.query(func.count(Message.id)).filter(
+            Message.created_at >= day,
+            Message.created_at < next_day
+        ).scalar() or 0
+        daily_stats.append({"date": day.strftime("%Y-%m-%d"), "count": count})
+
+    return {
+        "total": total,
+        "today": today_count,
+        "this_week": week_count,
+        "this_month": month_count,
+        "daily_stats": daily_stats,
+    }
+
+
+# --- Recent signups ---
+@router.get("/recent-signups")
+async def get_recent_signups(
+    limit: int = Query(10, ge=1, le=50),
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    users = db.query(User).order_by(User.created_at.desc()).limit(limit).all()
+    return [user_to_dict(u) for u in users]
+
+
+# --- Top workspaces ---
+@router.get("/top-workspaces")
+async def get_top_workspaces(
+    limit: int = Query(5, ge=1, le=20),
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    workspaces = db.query(Workspace).order_by(
+        Workspace.monthly_message_count.desc().nullslast()
+    ).limit(limit).all()
+
+    result = []
+    for ws in workspaces:
+        owner = db.query(User).filter(User.id == ws.user_id).first()
+        result.append({
+            "id": ws.id,
+            "name": ws.name,
+            "owner": owner.full_name if owner else "N/A",
+            "messages_this_month": ws.monthly_message_count or 0,
+        })
+    return result

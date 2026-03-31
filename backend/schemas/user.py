@@ -28,6 +28,7 @@ class UserResponse(UserBase):
     plan: PlanType
     is_active: bool
     is_verified: bool
+    is_superadmin: bool = False
     created_at: datetime
 
     class Config:
