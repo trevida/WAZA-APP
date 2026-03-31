@@ -10,7 +10,7 @@ ROOT_DIR = Path(__file__).parent
 load_dotenv(ROOT_DIR / '.env')
 
 # Import routers
-from routers import auth, workspaces, agents, webhook, billing, contacts, conversations, broadcasts, analytics, admin
+from routers import auth, workspaces, agents, webhook, billing, contacts, conversations, broadcasts, analytics, admin, demo
 from config import settings
 
 # Configure logging
@@ -41,6 +41,7 @@ api_router.include_router(analytics.router)
 api_router.include_router(webhook.router)
 api_router.include_router(billing.router)
 api_router.include_router(admin.router)
+api_router.include_router(demo.router)
 
 # Root endpoint
 @api_router.get("/")

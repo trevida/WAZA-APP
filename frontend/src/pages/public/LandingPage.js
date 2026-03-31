@@ -1,9 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { MessageCircle, Bot, Calendar, DollarSign, Megaphone, BarChart3, Shield, Zap, Check, ArrowRight } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import DemoModal from '@/components/DemoModal';
 
 const LandingPage = () => {
+  const [showDemo, setShowDemo] = useState(false);
   const features = [
     {
       icon: <Bot className="w-8 h-8 text-primary" />,
@@ -97,6 +99,14 @@ const LandingPage = () => {
                 <MessageCircle className="w-8 h-8 text-primary" />
                 <span className="text-2xl font-heading font-black">WAZA</span>
               </div>
+              <div className="hidden md:flex items-center space-x-6">
+                <Link to="/about" className="text-sm text-text-secondary hover:text-primary transition" data-testid="nav-about-link">
+                  À propos
+                </Link>
+                <Link to="/contact" className="text-sm text-text-secondary hover:text-primary transition" data-testid="nav-contact-link">
+                  Contact
+                </Link>
+              </div>
               <div className="flex items-center space-x-4">
                 <Link to="/login">
                   <Button variant="ghost" data-testid="nav-login-button">
@@ -131,7 +141,7 @@ const LandingPage = () => {
                   Essai gratuit <ArrowRight className="ml-2 w-5 h-5" />
                 </Button>
               </Link>
-              <Button size="lg" variant="outline" className="text-lg px-8" data-testid="hero-demo-button">
+              <Button size="lg" variant="outline" className="text-lg px-8" data-testid="hero-demo-button" onClick={() => setShowDemo(true)}>
                 Voir une démo
               </Button>
             </div>
@@ -332,14 +342,21 @@ const LandingPage = () => {
               <span className="text-xl font-heading font-black">WAZA</span>
               <span className="text-text-muted">by Massudom Silicon Valley</span>
             </div>
-            <div className="flex space-x-6 text-text-muted text-sm">
-              <a href="#" className="hover:text-primary transition">Confidentialité</a>
-              <a href="#" className="hover:text-primary transition">Conditions</a>
-              <a href="#" className="hover:text-primary transition">Contact</a>
+            <div className="flex flex-wrap justify-center gap-x-6 gap-y-2 text-text-muted text-sm">
+              <Link to="/about" className="hover:text-primary transition" data-testid="footer-about-link">À propos</Link>
+              <Link to="/privacy" className="hover:text-primary transition" data-testid="footer-privacy-link">Confidentialité</Link>
+              <Link to="/terms" className="hover:text-primary transition" data-testid="footer-terms-link">Conditions</Link>
+              <Link to="/contact" className="hover:text-primary transition" data-testid="footer-contact-link">Contact</Link>
             </div>
+          </div>
+          <div className="text-center mt-6 text-text-muted text-xs">
+            &copy; {new Date().getFullYear()} WAZA by Massudom Silicon Valley. Tous droits réservés.
           </div>
         </div>
       </footer>
+
+      {/* Demo Modal */}
+      <DemoModal isOpen={showDemo} onClose={() => setShowDemo(false)} />
     </div>
   );
 };

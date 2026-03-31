@@ -9,6 +9,10 @@ import LandingPage from "@/pages/public/LandingPage";
 import LoginPage from "@/pages/public/LoginPage";
 import RegisterPage from "@/pages/public/RegisterPage";
 import ForgotPasswordPage from "@/pages/public/ForgotPasswordPage";
+import PrivacyPage from "@/pages/public/PrivacyPage";
+import TermsPage from "@/pages/public/TermsPage";
+import ContactPage from "@/pages/public/ContactPage";
+import AboutPage from "@/pages/public/AboutPage";
 
 // Dashboard pages
 import DashboardLayout from "@/pages/dashboard/DashboardLayout";
@@ -91,6 +95,10 @@ function App() {
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<LandingPage />} />
+          <Route path="/privacy" element={<PrivacyPage />} />
+          <Route path="/terms" element={<TermsPage />} />
+          <Route path="/contact" element={<ContactPage />} />
+          <Route path="/about" element={<AboutPage />} />
           <Route
             path="/login"
             element={
