@@ -1,7 +1,7 @@
 import React from "react";
 import { useQuery } from "@tanstack/react-query";
 import { adminService } from "@/services/adminService";
-import { DollarSign, TrendingUp, Download } from "lucide-react";
+import { DollarSign, TrendingUp, Download, FileDown } from "lucide-react";
 import {
   LineChart,
   Line,
@@ -59,9 +59,14 @@ export default function AdminRevenuesPage() {
     <div className="space-y-6" data-testid="admin-revenues-page">
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-bold">Revenus</h1>
-        <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2 bg-[#FFD600]/10 text-[#FFD600] rounded-lg text-sm hover:bg-[#FFD600]/20" data-testid="export-csv-btn">
-          <Download size={16} /> Exporter CSV
-        </button>
+        <div className="flex gap-2">
+          <button onClick={() => { adminService.exportRevenuesPdf(); }} className="flex items-center gap-2 px-3 py-2 bg-[#111118] border border-[#1E1E2E] rounded-lg text-sm text-gray-300 hover:text-[#FFD600] hover:border-[#FFD600]/30 transition" data-testid="export-revenues-pdf-btn">
+            <FileDown size={16} /> PDF
+          </button>
+          <button onClick={exportCSV} className="flex items-center gap-2 px-4 py-2 bg-[#FFD600]/10 text-[#FFD600] rounded-lg text-sm hover:bg-[#FFD600]/20" data-testid="export-csv-btn">
+            <Download size={16} /> CSV
+          </button>
+        </div>
       </div>
 
       {/* KPI */}

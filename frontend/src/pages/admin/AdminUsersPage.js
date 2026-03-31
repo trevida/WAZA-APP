@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { adminService } from "@/services/adminService";
-import { Search, ChevronLeft, ChevronRight, UserX, UserCheck, Crown, Trash2, Eye, X } from "lucide-react";
+import { Search, ChevronLeft, ChevronRight, UserX, UserCheck, Crown, Trash2, Eye, X, FileDown } from "lucide-react";
 import { toast } from "sonner";
 
 const PLAN_COLORS = { free: "#6B7280", starter: "#3B82F6", pro: "#FFD600", business: "#10B981" };
@@ -41,7 +41,17 @@ export default function AdminUsersPage() {
 
   return (
     <div className="space-y-6" data-testid="admin-users-page">
-      <h1 className="text-xl font-bold">Utilisateurs</h1>
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-bold">Utilisateurs</h1>
+        <button
+          onClick={() => { adminService.exportUsersPdf(); toast.success('Téléchargement PDF...'); }}
+          className="flex items-center gap-2 px-3 py-2 bg-[#111118] border border-[#1E1E2E] rounded-lg text-sm text-gray-300 hover:text-[#FFD600] hover:border-[#FFD600]/30 transition"
+          data-testid="export-users-pdf-btn"
+        >
+          <FileDown size={16} />
+          Export PDF
+        </button>
+      </div>
 
       {/* Filters */}
       <div className="flex flex-wrap gap-3">

@@ -249,3 +249,16 @@ class DemoSession(Base):
     first_message = Column(Text)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     last_activity = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+
+
+class AuditLog(Base):
+    __tablename__ = "audit_logs"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    admin_email = Column(String, nullable=False, index=True)
+    action = Column(String, nullable=False)
+    target_type = Column(String)
+    target_id = Column(String)
+    details = Column(Text)
+    ip_address = Column(String)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), index=True)

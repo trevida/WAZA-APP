@@ -41,6 +41,8 @@ import AdminUsersPage from "@/pages/admin/AdminUsersPage";
 import AdminRevenuesPage from "@/pages/admin/AdminRevenuesPage";
 import AdminWorkspacesPage from "@/pages/admin/AdminWorkspacesPage";
 import AdminSettingsPage from "@/pages/admin/AdminSettingsPage";
+import AdminAnalyticsPage from "@/pages/admin/AdminAnalyticsPage";
+import AdminAuditLogPage from "@/pages/admin/AdminAuditLogPage";
 
 import "@/index.css";
 
@@ -156,9 +158,11 @@ function App() {
             }
           >
             <Route index element={<AdminOverview />} />
+            <Route path="analytics" element={<AdminAnalyticsPage />} />
             <Route path="users" element={<AdminUsersPage />} />
             <Route path="revenues" element={<AdminRevenuesPage />} />
             <Route path="workspaces" element={<AdminWorkspacesPage />} />
+            <Route path="audit-log" element={<AdminAuditLogPage />} />
             <Route path="settings" element={<AdminSettingsPage />} />
           </Route>
         </Routes>

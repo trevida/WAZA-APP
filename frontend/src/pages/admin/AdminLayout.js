@@ -13,13 +13,17 @@ import {
   Menu,
   X,
   ChevronRight,
+  BarChart3,
+  ClipboardList,
 } from "lucide-react";
 
 const navItems = [
   { to: "/admin", icon: LayoutDashboard, label: "Vue d'ensemble", end: true },
+  { to: "/admin/analytics", icon: BarChart3, label: "Analytics" },
   { to: "/admin/users", icon: Users, label: "Utilisateurs" },
   { to: "/admin/revenues", icon: DollarSign, label: "Revenus" },
   { to: "/admin/workspaces", icon: Building2, label: "Workspaces" },
+  { to: "/admin/audit-log", icon: ClipboardList, label: "Audit Log" },
   { to: "/admin/settings", icon: Settings, label: "Paramètres" },
 ];
 

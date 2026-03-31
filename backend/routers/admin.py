@@ -6,7 +6,7 @@ from models import (
     User, Workspace, Agent, Contact, Conversation, Message,
     Broadcast, Subscription, PaymentTransaction, UsageLog,
     PlanType, SubscriptionStatus, ConversationStatus, PaymentConfig,
-    DemoSession
+    DemoSession, AuditLog
 )
 from utils.dependencies import get_current_superadmin
 from utils.auth import hash_password
@@ -14,6 +14,7 @@ from config import PLAN_LIMITS
 from datetime import datetime, timezone, timedelta
 from pydantic import BaseModel
 from typing import Optional
+from fastapi.responses import StreamingResponse
 import logging
 import csv
 import io
@@ -49,6 +50,12 @@ def user_to_dict(user):
         "is_superadmin": getattr(user, 'is_superadmin', False),
         "created_at": user.created_at.isoformat() if user.created_at else None,
     }
+
+
+def log_audit(db: Session, admin_email: str, action: str, target_type: str = None, target_id: str = None, details: str = None, ip: str = None):
+    entry = AuditLog(admin_email=admin_email, action=action, target_type=target_type, target_id=target_id, details=details, ip_address=ip)
+    db.add(entry)
+    db.commit()
 
 
 # --- Admin Stats ---
@@ -225,6 +232,7 @@ async def suspend_user(
     user.is_active = not body.suspend
     db.commit()
     action = "suspended" if body.suspend else "reactivated"
+    log_audit(db, admin.email, f"user_{action}", "user", user_id, f"{user.email}")
     logger.info(f"Admin {admin.email} {action} user {user.email}")
     return {"message": f"User {action} successfully", "is_active": user.is_active}
 
@@ -253,6 +261,7 @@ async def change_user_plan(
         ws.message_limit = limits.get("messages", 100)
 
     db.commit()
+    log_audit(db, admin.email, "plan_changed", "user", user_id, f"{user.email}: {old_plan} -> {new_plan.value}")
     logger.info(f"Admin {admin.email} changed user {user.email} plan from {old_plan} to {new_plan.value}")
     return {"message": f"Plan changed from {old_plan} to {new_plan.value}", "plan": new_plan.value}
 
@@ -272,6 +281,7 @@ async def delete_user(
     email = user.email
     db.delete(user)
     db.commit()
+    log_audit(db, admin.email, "user_deleted", "user", user_id, email)
     logger.info(f"Admin {admin.email} deleted user {email}")
     return {"message": f"User {email} deleted successfully"}
 
@@ -540,6 +550,7 @@ async def update_payment_config(
         os.environ["FLUTTERWAVE_ENCRYPTION_KEY"] = body.flutterwave_encryption_key
 
     db.commit()
+    log_audit(db, admin.email, "payment_config_updated", "payment_config", config.id, f"Updated: {', '.join(updated_fields)}")
     logger.info(f"Admin {admin.email} updated payment config: {updated_fields}")
     return {"message": "Payment config updated", "updated_fields": updated_fields}
 
@@ -598,3 +609,258 @@ async def get_demo_stats(
         "daily_stats": daily_stats,
         "recent_sessions": recent_sessions,
     }
+
+
+# --- Advanced Analytics ---
+@router.get("/analytics/advanced")
+async def get_advanced_analytics(
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Signup trend (30 days)
+    signup_trend = []
+    for i in range(30):
+        day = today - timedelta(days=29 - i)
+        next_day = day + timedelta(days=1)
+        count = db.query(func.count(User.id)).filter(User.created_at >= day, User.created_at < next_day).scalar() or 0
+        signup_trend.append({"date": day.strftime("%Y-%m-%d"), "signups": count})
+
+    # Retention: users who logged in this week vs total
+    total_users = db.query(func.count(User.id)).scalar() or 0
+    week_ago = today - timedelta(days=7)
+    active_this_week = db.query(func.count(User.id)).filter(User.is_active == True).scalar() or 0
+    retention_rate = round((active_this_week / total_users) * 100, 1) if total_users > 0 else 0
+
+    # Plan conversion funnel
+    free_count = db.query(func.count(User.id)).filter(User.plan == PlanType.FREE).scalar() or 0
+    starter_count = db.query(func.count(User.id)).filter(User.plan == PlanType.STARTER).scalar() or 0
+    pro_count = db.query(func.count(User.id)).filter(User.plan == PlanType.PRO).scalar() or 0
+    business_count = db.query(func.count(User.id)).filter(User.plan == PlanType.BUSINESS).scalar() or 0
+    paid_users = starter_count + pro_count + business_count
+    conversion_rate = round((paid_users / total_users) * 100, 1) if total_users > 0 else 0
+    conversion_funnel = [
+        {"stage": "Free", "count": free_count},
+        {"stage": "Starter", "count": starter_count},
+        {"stage": "Pro", "count": pro_count},
+        {"stage": "Business", "count": business_count},
+    ]
+
+    # Top agents by messages
+    top_agents = []
+    agents_data = db.query(
+        Agent.name, Agent.module,
+        func.count(Message.id).label("msg_count")
+    ).outerjoin(Conversation, Conversation.agent_id == Agent.id
+    ).outerjoin(Message, Message.conversation_id == Conversation.id
+    ).group_by(Agent.id, Agent.name, Agent.module
+    ).order_by(func.count(Message.id).desc()).limit(10).all()
+    for a in agents_data:
+        top_agents.append({"name": a.name, "module": a.module.value if a.module else "sell", "messages": a.msg_count or 0})
+
+    # Activity heatmap (by hour of day, last 30 days)
+    heatmap = [0] * 24
+    msgs_by_hour = db.query(
+        extract('hour', Message.created_at).label('hour'),
+        func.count(Message.id)
+    ).filter(Message.created_at >= today - timedelta(days=30)
+    ).group_by('hour').all()
+    for hour, count in msgs_by_hour:
+        if hour is not None:
+            heatmap[int(hour)] = count
+
+    # Country distribution
+    country_dist = db.query(
+        User.country, func.count(User.id).label("count")
+    ).group_by(User.country).order_by(func.count(User.id).desc()).limit(10).all()
+    countries = [{"country": c or "Unknown", "count": cnt} for c, cnt in country_dist]
+
+    return {
+        "signup_trend": signup_trend,
+        "retention_rate": retention_rate,
+        "conversion_rate": conversion_rate,
+        "conversion_funnel": conversion_funnel,
+        "top_agents": top_agents,
+        "activity_heatmap": heatmap,
+        "countries": countries,
+        "total_users": total_users,
+        "paid_users": paid_users,
+    }
+
+
+# --- Audit Log ---
+@router.get("/audit-logs")
+async def get_audit_logs(
+    page: int = Query(1, ge=1),
+    limit: int = Query(50, le=200),
+    action_filter: Optional[str] = None,
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    query = db.query(AuditLog)
+    if action_filter:
+        query = query.filter(AuditLog.action.ilike(f"%{action_filter}%"))
+
+    total = query.count()
+    logs = query.order_by(AuditLog.created_at.desc()).offset((page - 1) * limit).limit(limit).all()
+
+    return {
+        "total": total,
+        "page": page,
+        "logs": [
+            {
+                "id": log.id,
+                "admin_email": log.admin_email,
+                "action": log.action,
+                "target_type": log.target_type,
+                "target_id": log.target_id,
+                "details": log.details,
+                "created_at": log.created_at.isoformat() if log.created_at else None,
+            }
+            for log in logs
+        ],
+    }
+
+
+# --- PDF Export ---
+@router.get("/export/users-pdf")
+async def export_users_pdf(
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
+
+    users = db.query(User).order_by(User.created_at.desc()).limit(500).all()
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("WAZA - Rapport Utilisateurs", styles['Title']))
+    elements.append(Paragraph(f"Généré le {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')}", styles['Normal']))
+    elements.append(Spacer(1, 20))
+
+    data = [["Email", "Nom", "Plan", "Actif", "Vérifié", "Inscrit le"]]
+    for u in users:
+        data.append([
+            u.email[:30],
+            (u.full_name or "")[:20],
+            u.plan.value if u.plan else "free",
+            "Oui" if u.is_active else "Non",
+            "Oui" if u.is_verified else "Non",
+            u.created_at.strftime("%d/%m/%Y") if u.created_at else "",
+        ])
+
+    table = Table(data, colWidths=[140, 100, 60, 40, 50, 70])
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1A1A2E')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTSIZE', (0, 0), (-1, -1), 8),
+        ('FONTSIZE', (0, 0), (-1, 0), 9),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F5F5F5')]),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(table)
+    doc.build(elements)
+    buffer.seek(0)
+
+    log_audit(db, admin.email, "export_users_pdf", "report", None, f"{len(users)} users exported")
+    return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=waza_users_report.pdf"})
+
+
+@router.get("/export/revenues-pdf")
+async def export_revenues_pdf(
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib import colors
+    from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer
+    from reportlab.lib.styles import getSampleStyleSheet
+
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+
+    # Gather plan distribution + MRR
+    plan_counts = {}
+    for plan in PlanType:
+        cnt = db.query(func.count(User.id)).filter(User.plan == plan).scalar() or 0
+        plan_counts[plan.value] = cnt
+
+    plan_prices = {"free": 0, "starter": 19900, "pro": 49900, "business": 99000}
+    mrr = sum(plan_counts.get(p, 0) * price for p, price in plan_prices.items())
+
+    # Recent transactions
+    txns = db.query(PaymentTransaction).order_by(PaymentTransaction.created_at.desc()).limit(100).all()
+
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=A4)
+    styles = getSampleStyleSheet()
+    elements = []
+
+    elements.append(Paragraph("WAZA - Rapport Revenus", styles['Title']))
+    elements.append(Paragraph(f"Généré le {datetime.now(timezone.utc).strftime('%d/%m/%Y %H:%M UTC')}", styles['Normal']))
+    elements.append(Spacer(1, 12))
+    elements.append(Paragraph(f"MRR actuel: {mrr:,.0f} FCFA", styles['Heading2']))
+    elements.append(Spacer(1, 10))
+
+    # Plan distribution table
+    plan_data = [["Plan", "Utilisateurs", "Prix/mois", "Revenu"]]
+    for plan_name, count in plan_counts.items():
+        price = plan_prices.get(plan_name, 0)
+        plan_data.append([plan_name.capitalize(), str(count), f"{price:,.0f} FCFA", f"{count * price:,.0f} FCFA"])
+    plan_data.append(["Total", str(sum(plan_counts.values())), "", f"{mrr:,.0f} FCFA"])
+
+    t1 = Table(plan_data, colWidths=[80, 80, 100, 120])
+    t1.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1A1A2E')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+        ('FONTSIZE', (0, 0), (-1, -1), 9),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTNAME', (0, -1), (-1, -1), 'Helvetica-Bold'),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -2), [colors.white, colors.HexColor('#F5F5F5')]),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(t1)
+    elements.append(Spacer(1, 20))
+
+    if txns:
+        elements.append(Paragraph("Dernières transactions", styles['Heading3']))
+        elements.append(Spacer(1, 8))
+        txn_data = [["Date", "Utilisateur", "Montant", "Statut"]]
+        for tx in txns[:50]:
+            user = db.query(User).filter(User.id == tx.user_id).first()
+            txn_data.append([
+                tx.created_at.strftime("%d/%m/%Y") if tx.created_at else "",
+                (user.email if user else "")[:25],
+                f"{tx.amount:,.0f} FCFA" if tx.amount else "0 FCFA",
+                tx.status or "N/A",
+            ])
+        t2 = Table(txn_data, colWidths=[80, 150, 100, 80])
+        t2.setStyle(TableStyle([
+            ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#1A1A2E')),
+            ('TEXTCOLOR', (0, 0), (-1, 0), colors.white),
+            ('FONTSIZE', (0, 0), (-1, -1), 8),
+            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+            ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#F5F5F5')]),
+            ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
+            ('TOPPADDING', (0, 0), (-1, -1), 4),
+            ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ]))
+        elements.append(t2)
+
+    doc.build(elements)
+    buffer.seek(0)
+
+    log_audit(db, admin.email, "export_revenues_pdf", "report", None, f"MRR: {mrr} FCFA")
+    return StreamingResponse(buffer, media_type="application/pdf", headers={"Content-Disposition": "attachment; filename=waza_revenues_report.pdf"})

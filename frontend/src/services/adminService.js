@@ -70,4 +70,38 @@ export const adminService = {
     const response = await api.get('/admin/demo-stats');
     return response.data;
   },
+
+  getAdvancedAnalytics: async () => {
+    const response = await api.get('/admin/analytics/advanced');
+    return response.data;
+  },
+
+  getAuditLogs: async (page = 1, limit = 50, actionFilter = '') => {
+    const params = { page, limit };
+    if (actionFilter) params.action_filter = actionFilter;
+    const response = await api.get('/admin/audit-logs', { params });
+    return response.data;
+  },
+
+  exportUsersPdf: async () => {
+    const response = await api.get('/admin/export/users-pdf', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'waza_users_report.pdf');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  },
+
+  exportRevenuesPdf: async () => {
+    const response = await api.get('/admin/export/revenues-pdf', { responseType: 'blob' });
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'waza_revenues_report.pdf');
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  },
 };
