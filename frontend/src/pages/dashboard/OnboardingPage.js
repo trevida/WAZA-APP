@@ -271,7 +271,7 @@ const OnboardingPage = () => {
                   <Input
                     value={contactData.phone_number}
                     onChange={(e) => setContactData({ ...contactData, phone_number: e.target.value })}
-                    placeholder="+221701234567"
+                    placeholder="+237699123456"
                   />
                 </div>
                 <div className="text-left">

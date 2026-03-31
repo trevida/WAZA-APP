@@ -105,7 +105,7 @@ const RegisterPage = () => {
               <Input
                 id="phone"
                 type="tel"
-                placeholder="+221 70 123 45 67"
+                placeholder="+237 6 99 12 34 56"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               />

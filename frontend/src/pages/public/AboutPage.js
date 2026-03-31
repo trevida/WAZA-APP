@@ -126,7 +126,7 @@ const AboutPage = () => {
             <h2 className="text-2xl sm:text-3xl font-bold mb-6">L'équipe</h2>
             <p className="text-lg text-text-secondary leading-relaxed mb-8">
               WAZA est développé par <strong className="text-text-primary">Massudom Silicon Valley</strong>,
-              une startup tech basée à Dakar, Sénégal. Notre équipe combine expertise en IA,
+              une startup tech basée à Bandjoun, Cameroun. Notre équipe combine expertise en IA,
               développement logiciel et connaissance approfondie du marché africain.
             </p>
             <Link to="/contact">

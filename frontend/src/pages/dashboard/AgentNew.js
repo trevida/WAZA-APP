@@ -106,7 +106,7 @@ const AgentForm = () => {
     try {
       const response = await agentService.test(id, {
         test_message: testMessage,
-        test_phone_number: '+221700000000',
+        test_phone_number: '+237699000000',
       });
       
       setChatHistory([

@@ -49,7 +49,7 @@ class User(Base):
     full_name = Column(String, nullable=False)
     phone = Column(String)
     company_name = Column(String)
-    country = Column(String, default="SN")  # Senegal by default
+    country = Column(String, default="CM")  # Cameroon by default
     plan = Column(SQLEnum(PlanType), default=PlanType.FREE, nullable=False)
     is_active = Column(Boolean, default=True)
     is_verified = Column(Boolean, default=False)

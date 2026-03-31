@@ -124,7 +124,7 @@ const PrivacyPage = () => {
               <br />
               Email : <a href="mailto:privacy@waza.africa" className="text-primary hover:underline">privacy@waza.africa</a>
               <br />
-              WAZA — Massudom Silicon Valley, Dakar, Sénégal
+              WAZA — Massudom Silicon Valley, Bandjoun, Cameroun
             </p>
           </section>
         </div>

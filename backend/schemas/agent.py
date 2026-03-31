@@ -29,4 +29,4 @@ class AgentResponse(AgentBase):
 
 class AgentTestRequest(BaseModel):
     test_message: str
-    test_phone_number: str = "+221700000000"
+    test_phone_number: str = "+237699000000"

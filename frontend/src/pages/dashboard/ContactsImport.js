@@ -107,11 +107,11 @@ const ContactsImport = () => {
               </h4>
               <div className="bg-background rounded-lg p-4 font-mono text-sm text-text-secondary">
                 phone_number,name,tags<br />
-                +221701234567,Jean Dupont,vip;customer<br />
-                +221702345678,Marie Sall,prospect
+                +237699123456,Jean Dupont,vip;customer<br />
+                +237699234567,Marie Nana,prospect
               </div>
               <p className="text-text-muted text-sm mt-3">
-                • Téléphone au format international (+221...)<br />
+                • Téléphone au format international (+237...)<br />
                 • Tags séparés par des points-virgules
               </p>
             </div>

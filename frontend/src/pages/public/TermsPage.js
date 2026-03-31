@@ -129,8 +129,8 @@ const TermsPage = () => {
           <section>
             <h2 className="text-2xl font-bold text-text-primary mb-4">9. Droit applicable</h2>
             <p>
-              Ces conditions sont régies par les lois du Sénégal. Tout litige sera soumis aux tribunaux
-              compétents de Dakar, Sénégal.
+              Ces conditions sont régies par les lois du Cameroun. Tout litige sera soumis aux tribunaux
+              compétents de Bandjoun, Cameroun.
             </p>
           </section>
 
@@ -141,7 +141,7 @@ const TermsPage = () => {
               <br />
               Email : <a href="mailto:legal@waza.africa" className="text-primary hover:underline">legal@waza.africa</a>
               <br />
-              WAZA — Massudom Silicon Valley, Dakar, Sénégal
+              WAZA — Massudom Silicon Valley, Bandjoun, Cameroun
             </p>
           </section>
         </div>

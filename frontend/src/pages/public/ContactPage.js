@@ -77,7 +77,7 @@ const ContactPage = () => {
                 </div>
                 <div>
                   <h3 className="font-bold mb-1">Téléphone</h3>
-                  <p className="text-text-secondary">+221 77 123 45 67</p>
+                  <p className="text-text-secondary">+237 6 99 12 34 56</p>
                 </div>
               </div>
 
@@ -89,7 +89,7 @@ const ContactPage = () => {
                   <h3 className="font-bold mb-1">Adresse</h3>
                   <p className="text-text-secondary">
                     Massudom Silicon Valley<br />
-                    Dakar, Sénégal
+                    Bandjoun, Cameroun
                   </p>
                 </div>
               </div>
