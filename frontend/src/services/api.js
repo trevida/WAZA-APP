@@ -1,7 +1,8 @@
 import axios from 'axios';
 import useAuthStore from '../store/authStore';
 
-const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
+const BACKEND_URL = process.env.REACT_APP_BACKEND_URL
+  || 'https://earnest-creativity-production-e3cc.up.railway.app';
 
 const api = axios.create({
   baseURL: `${BACKEND_URL}/api`,
