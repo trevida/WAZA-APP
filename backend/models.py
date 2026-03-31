@@ -238,3 +238,14 @@ class PaymentConfig(Base):
     bank_enabled = Column(Boolean, default=False)
     # Meta
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+
+
+class DemoSession(Base):
+    __tablename__ = "demo_sessions"
+
+    id = Column(String, primary_key=True, default=lambda: str(uuid.uuid4()))
+    session_id = Column(String, nullable=False, index=True)
+    messages_count = Column(Integer, default=1)
+    first_message = Column(Text)
+    created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
+    last_activity = Column(DateTime, default=lambda: datetime.now(timezone.utc))

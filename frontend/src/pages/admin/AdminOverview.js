@@ -10,6 +10,7 @@ import {
   Bot,
   UserPlus,
   ArrowUpRight,
+  Play,
 } from "lucide-react";
 import {
   LineChart,
@@ -22,6 +23,8 @@ import {
   PieChart,
   Pie,
   Cell,
+  BarChart,
+  Bar,
 } from "recharts";
 
 const PLAN_COLORS = {
@@ -69,6 +72,11 @@ export default function AdminOverview() {
     queryFn: adminService.getMessages,
   });
 
+  const { data: demoStats } = useQuery({
+    queryKey: ["admin-demo-stats"],
+    queryFn: adminService.getDemoStats,
+  });
+
   const planData = stats?.plan_distribution
     ? Object.entries(stats.plan_distribution).map(([name, value]) => ({
         name: name.charAt(0).toUpperCase() + name.slice(1),
@@ -90,11 +98,12 @@ export default function AdminOverview() {
       <h1 className="text-xl font-bold">Vue d'ensemble</h1>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
         <KPICard icon={Users} label="Utilisateurs" value={stats?.total_users || 0} sub={`${stats?.signups_today || 0} aujourd'hui`} />
         <KPICard icon={CreditCard} label="MRR" value={`${(stats?.mrr_fcfa || 0).toLocaleString()} F`} sub={`$${stats?.mrr_usd || 0}`} color="#10B981" />
         <KPICard icon={TrendingUp} label="Abonnements actifs" value={stats?.active_subscriptions || 0} color="#3B82F6" />
         <KPICard icon={MessageSquare} label="Messages aujourd'hui" value={stats?.messages_today || 0} sub={`${stats?.total_messages || 0} total`} color="#F59E0B" />
+        <KPICard icon={Play} label="Démos jouées" value={demoStats?.total_sessions || 0} sub={`${demoStats?.sessions_today || 0} aujourd'hui`} color="#A855F7" />
       </div>
 
       <div className="grid lg:grid-cols-3 gap-6">
@@ -144,6 +153,42 @@ export default function AdminOverview() {
       </div>
 
       <div className="grid lg:grid-cols-2 gap-6">
+        {/* Demo Engagement */}
+        <div className="bg-[#111118] border border-[#1E1E2E] rounded-xl p-5" data-testid="demo-engagement-card">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-gray-300">Engagement Démo (14j)</h2>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="text-gray-500">{demoStats?.avg_messages_per_session || 0} msg/session</span>
+              <span className="text-gray-500">{demoStats?.sessions_this_week || 0} cette semaine</span>
+            </div>
+          </div>
+          <div className="h-44">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={demoStats?.daily_stats || []}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#1E1E2E" />
+                <XAxis dataKey="date" tick={{ fill: "#6B7280", fontSize: 9 }} tickFormatter={(d) => d.slice(5)} />
+                <YAxis tick={{ fill: "#6B7280", fontSize: 10 }} allowDecimals={false} />
+                <Tooltip contentStyle={{ background: "#111118", border: "1px solid #1E1E2E", borderRadius: "8px", color: "#fff" }} />
+                <Bar dataKey="demos" fill="#A855F7" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+          {/* Recent demo sessions */}
+          {demoStats?.recent_sessions?.length > 0 && (
+            <div className="mt-4 border-t border-[#1E1E2E] pt-3">
+              <p className="text-xs text-gray-500 mb-2">Dernières sessions</p>
+              <div className="space-y-2">
+                {demoStats.recent_sessions.slice(0, 4).map((s, i) => (
+                  <div key={i} className="flex items-center justify-between text-xs">
+                    <span className="text-gray-400 truncate max-w-[200px]">"{s.first_message}"</span>
+                    <span className="text-gray-500 flex-shrink-0 ml-2">{s.messages_count} msg</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         {/* Recent signups */}
         <div className="bg-[#111118] border border-[#1E1E2E] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Inscriptions récentes</h2>
@@ -169,7 +214,9 @@ export default function AdminOverview() {
             ))}
           </div>
         </div>
+      </div>
 
+      <div className="grid lg:grid-cols-2 gap-6">
         {/* Top workspaces */}
         <div className="bg-[#111118] border border-[#1E1E2E] rounded-xl p-5">
           <h2 className="text-sm font-semibold text-gray-300 mb-4">Top Workspaces</h2>

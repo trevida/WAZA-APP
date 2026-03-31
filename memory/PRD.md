@@ -15,7 +15,6 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 - **Backend** : FastAPI, PostgreSQL (SQLAlchemy + Alembic), Redis, Celery
 - **Integrations** : Claude Sonnet 4.5 (Emergent LLM Key / standard Anthropic SDK fallback), Stripe (test, emergent/standard SDK fallback), WhatsApp API (mock), CinetPay (mock)
 - **Deploiement** : Railway (Backend + PostgreSQL + Redis + Celery Worker) + Vercel (Frontend)
-- **Note Production** : Les services claude_ai.py et stripe_service.py detectent automatiquement l'environnement : emergentintegrations (Emergent preview) ou SDK standards anthropic/stripe (Railway production)
 
 ### Core Features
 1. **Authentification** : Register, Login, Refresh Token, Forgot/Reset Password
@@ -42,7 +41,7 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 
 ### Phase 1 : Backend (COMPLETE)
 - [x] PostgreSQL + SQLAlchemy + Alembic migrations
-- [x] FastAPI avec tous les routers (auth, workspaces, agents, contacts, conversations, broadcasts, analytics, billing, webhook)
+- [x] FastAPI avec tous les routers (auth, workspaces, agents, contacts, conversations, broadcasts, analytics, billing, webhook, demo)
 - [x] Claude AI integration via Emergent LLM Key
 - [x] Stripe integration via emergentintegrations
 - [x] WhatsApp API mock
@@ -56,60 +55,34 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 - [x] Zustand state management (auth + workspace stores)
 - [x] React Query pour les API calls
 - [x] Landing page avec branding WAZA
-- [x] Pages publiques : Login, Register, Forgot Password
+- [x] Pages publiques : Login, Register, Forgot Password, Privacy, Terms, Contact, About
 - [x] Dashboard Layout avec sidebar navigation
-- [x] 13 pages dashboard : Home, Agents, AgentNew, AgentEdit, Contacts, ContactsImport, Conversations, ConversationDetail, Broadcasts, BroadcastNew, Analytics, Billing, Settings, Onboarding
+- [x] 13 pages dashboard
 
 ### Phase 3 : Deploiement (COMPLETE)
-- [x] Dockerfile a la racine (python:3.11-slim, builder DOCKERFILE)
-- [x] railway.json configure (DOCKERFILE builder, healthcheck, restart policy)
-- [x] Procfile (web + celery worker)
-- [x] vercel.json (SPA rewrites, cache headers)
-- [x] CORS configure pour production (FRONTEND_URL + ENVIRONMENT)
-- [x] DEPLOYMENT.md avec guide pas-a-pas
-- [x] Variables d'environnement documentees
-
-### Testing (COMPLETE)
-- [x] Backend : 17/17 API endpoints testes et fonctionnels (100%) - iteration 1
-- [x] Admin Backend : 21/21 tests passes (100%) - iteration 2
-- [x] Legal Pages & Demo : 100% backend + 100% frontend - iteration 3
-- [x] Frontend : Toutes les pages chargent correctement (100%)
-- [x] Admin Frontend : Toutes les pages admin fonctionnelles (100%)
-- [x] Securite : Non-admin bloque sur /admin/* (403)
-- [x] Test files : /app/backend/tests/test_waza_api.py, test_admin_api.py, test_demo_chat.py
-- [x] Test reports : /app/test_reports/iteration_1.json, iteration_2.json, iteration_3.json
+- [x] Dockerfile, railway.json, Procfile, vercel.json
+- [x] CORS, DEPLOYMENT.md, variables d'environnement
 
 ### Phase 4 : Admin Dashboard (COMPLETE)
-- [x] Modele User : champ is_superadmin ajoute + migration Alembic
-- [x] Seed superadmin : admin@waza.africa / WazaAdmin2026!
-- [x] Backend : 11 endpoints admin (/stats, /users, /revenues, /workspaces, /messages, etc.)
-- [x] Middleware get_current_superadmin pour proteger toutes les routes admin
-- [x] Frontend Admin Login : /admin/login avec theme or (#FFD600)
-- [x] Frontend Admin Layout : sidebar + top bar avec KPIs en temps reel
-- [x] Frontend Admin Overview : KPI cards, Messages chart, Plan PieChart, Recent signups, Top workspaces
-- [x] Frontend Admin Users : table paginee + recherche + filtre plan + actions (suspend/plan/delete) + modal detail
-- [x] Frontend Admin Revenues : MRR cards, BarChart par plan, table transactions, export CSV
-- [x] Frontend Admin Workspaces : table avec owner, WhatsApp status, agents/contacts
-- [x] Frontend Admin Settings : mode maintenance, annonces, limites plans, configuration paiements (Stripe/CinetPay/Virement)
-- [x] Backend Payment Config : model PaymentConfig + GET/PUT /api/admin/payment-config avec masquage cles + hot-reload env vars
+- [x] Backend : 11+ endpoints admin
+- [x] Frontend : Overview, Users, Revenues, Workspaces, Settings (Payment Config)
 
 ### Phase 5 : Pages Legales & Demo Interactive (COMPLETE - Feb 2026)
-- [x] Page Confidentialite (/privacy) - contenu complet en francais
-- [x] Page Conditions d'Utilisation (/terms) - contenu complet en francais
-- [x] Page Contact (/contact) - formulaire + infos entreprise (soumission MOCKEE)
-- [x] Page A propos (/about) - mission, valeurs, stats, equipe
-- [x] Navbar mise a jour - liens "A propos" et "Contact"
-- [x] Footer mis a jour - liens vers 4 pages legales + copyright
-- [x] Demo Interactive Modal - simulateur WhatsApp avec IA Claude
-- [x] Backend proxy /api/demo/chat - endpoint public relayant vers Claude AI
-- [x] Validation message vide (422) sur /api/demo/chat
+- [x] Pages /privacy, /terms, /contact, /about en francais
+- [x] Navbar et Footer mis a jour avec liens
+- [x] Demo Interactive Modal WhatsApp avec IA Claude
+- [x] Backend proxy /api/demo/chat
+
+### Phase 6 : Demo Analytics (COMPLETE - Feb 2026)
+- [x] Modele DemoSession (session_id, messages_count, first_message, timestamps)
+- [x] Tracking automatique des sessions demo dans /api/demo/chat
+- [x] Endpoint admin GET /api/admin/demo-stats (total, today, week, avg msg, daily chart, recent)
+- [x] KPI "Demos jouees" (violet) sur Admin Overview
+- [x] Graphique "Engagement Demo (14j)" avec barres + sessions recentes
 
 ---
 
 ## Prioritized Backlog
-
-### P0 (Must Have)
-- All Phase 1-5 features DONE
 
 ### P1 (Should Have)
 - [ ] Email verification flow (SMTP integration)
@@ -122,13 +95,10 @@ WAZA est une plateforme SaaS qui permet aux entreprises africaines de deployer d
 ### P2 (Nice to Have)
 - [ ] Multi-language support (EN/FR toggle)
 - [ ] Agent conversation analytics (sentiment, topics)
-- [ ] Custom domain setup guide
 - [ ] Mobile responsive optimizations
 - [ ] Export data (CSV/PDF)
 - [ ] Team collaboration (multiple users per workspace)
 - [ ] A/B testing for broadcast messages
 - [ ] API rate limiting
 - [ ] Audit log for admin actions
-- [ ] Plan limits editing via Admin dashboard
 - [ ] Advanced analytics dashboard
-- [ ] PDF export for admin reports

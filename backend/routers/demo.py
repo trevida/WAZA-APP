@@ -2,6 +2,11 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
 from services.claude_ai import claude_service
+from database import get_db
+from sqlalchemy.orm import Session
+from fastapi import Depends
+from models import DemoSession
+from datetime import datetime, timezone
 import uuid
 import logging
 
@@ -35,13 +40,31 @@ Tu simules un agent commercial IA pour une boutique de mode africaine appelée "
 """
 
 @router.post("/chat", response_model=DemoChatResponse)
-async def demo_chat(request: DemoChatRequest):
+async def demo_chat(request: DemoChatRequest, db: Session = Depends(get_db)):
     """Public demo chat endpoint - no auth required"""
     if not request.message or not request.message.strip():
         raise HTTPException(status_code=422, detail="Le message ne peut pas être vide.")
 
     try:
         session_id = request.session_id or str(uuid.uuid4())
+
+        # Track demo session
+        try:
+            existing = db.query(DemoSession).filter(DemoSession.session_id == session_id).first()
+            if existing:
+                existing.messages_count += 1
+                existing.last_activity = datetime.now(timezone.utc)
+            else:
+                demo_session = DemoSession(
+                    session_id=session_id,
+                    first_message=request.message[:200],
+                    messages_count=1,
+                )
+                db.add(demo_session)
+            db.commit()
+        except Exception as e:
+            logger.warning(f"Failed to track demo session: {e}")
+            db.rollback()
 
         reply = await claude_service.generate_response(
             system_prompt=DEMO_SYSTEM_PROMPT,
@@ -51,6 +74,8 @@ async def demo_chat(request: DemoChatRequest):
         )
 
         return DemoChatResponse(reply=reply, session_id=session_id)
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Demo chat error: {e}")
         raise HTTPException(status_code=500, detail="Erreur du service IA. Réessayez.")

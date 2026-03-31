@@ -65,4 +65,9 @@ export const adminService = {
     const response = await api.put('/admin/payment-config', data);
     return response.data;
   },
+
+  getDemoStats: async () => {
+    const response = await api.get('/admin/demo-stats');
+    return response.data;
+  },
 };

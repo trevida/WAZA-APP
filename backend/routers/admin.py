@@ -5,7 +5,8 @@ from database import get_db
 from models import (
     User, Workspace, Agent, Contact, Conversation, Message,
     Broadcast, Subscription, PaymentTransaction, UsageLog,
-    PlanType, SubscriptionStatus, ConversationStatus, PaymentConfig
+    PlanType, SubscriptionStatus, ConversationStatus, PaymentConfig,
+    DemoSession
 )
 from utils.dependencies import get_current_superadmin
 from utils.auth import hash_password
@@ -541,3 +542,59 @@ async def update_payment_config(
     db.commit()
     logger.info(f"Admin {admin.email} updated payment config: {updated_fields}")
     return {"message": "Payment config updated", "updated_fields": updated_fields}
+
+
+# --- Demo Stats ---
+@router.get("/demo-stats")
+async def get_demo_stats(
+    admin: User = Depends(get_current_superadmin),
+    db: Session = Depends(get_db)
+):
+    total_sessions = db.query(func.count(DemoSession.id)).scalar() or 0
+    total_messages = db.query(func.sum(DemoSession.messages_count)).scalar() or 0
+
+    today = datetime.now(timezone.utc).replace(hour=0, minute=0, second=0, microsecond=0)
+    sessions_today = db.query(func.count(DemoSession.id)).filter(
+        DemoSession.created_at >= today
+    ).scalar() or 0
+
+    week_ago = today - timedelta(days=7)
+    sessions_this_week = db.query(func.count(DemoSession.id)).filter(
+        DemoSession.created_at >= week_ago
+    ).scalar() or 0
+
+    # Daily stats for the last 14 days
+    daily_stats = []
+    for i in range(14):
+        day = today - timedelta(days=13 - i)
+        next_day = day + timedelta(days=1)
+        count = db.query(func.count(DemoSession.id)).filter(
+            DemoSession.created_at >= day,
+            DemoSession.created_at < next_day
+        ).scalar() or 0
+        daily_stats.append({"date": day.strftime("%Y-%m-%d"), "demos": count})
+
+    # Average messages per session
+    avg_messages = round(total_messages / total_sessions, 1) if total_sessions > 0 else 0
+
+    # Recent demo sessions
+    recent = db.query(DemoSession).order_by(DemoSession.created_at.desc()).limit(10).all()
+    recent_sessions = [
+        {
+            "session_id": s.session_id[:8] + "...",
+            "first_message": s.first_message or "",
+            "messages_count": s.messages_count,
+            "created_at": s.created_at.isoformat() if s.created_at else None,
+        }
+        for s in recent
+    ]
+
+    return {
+        "total_sessions": total_sessions,
+        "total_messages": int(total_messages),
+        "sessions_today": sessions_today,
+        "sessions_this_week": sessions_this_week,
+        "avg_messages_per_session": avg_messages,
+        "daily_stats": daily_stats,
+        "recent_sessions": recent_sessions,
+    }
