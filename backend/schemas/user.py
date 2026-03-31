@@ -8,7 +8,7 @@ class UserBase(BaseModel):
     full_name: str
     phone: Optional[str] = None
     company_name: Optional[str] = None
-    country: str = "SN"
+    country: str = "CM"
 
 class UserCreate(UserBase):
     password: str = Field(..., min_length=8)

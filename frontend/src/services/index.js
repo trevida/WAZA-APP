@@ -25,6 +25,11 @@ export const authService = {
     const response = await api.post('/auth/reset-password', { token, new_password: newPassword });
     return response.data;
   },
+
+  resendVerification: async (email) => {
+    const response = await api.post('/auth/resend-verification', { email });
+    return response.data;
+  },
 };
 
 export const workspaceService = {

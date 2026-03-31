@@ -1,5 +1,6 @@
 import React from 'react';
 import { Outlet, Link, useLocation, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { 
   Home, Bot, Users, MessageCircle, Megaphone, BarChart3, 
   CreditCard, Settings, LogOut, Menu, X, MessageCircle as Logo 
@@ -7,25 +8,27 @@ import {
 import { Button } from '@/components/ui/button';
 import useAuthStore from '@/store/authStore';
 import useWorkspaceStore from '@/store/workspaceStore';
+import LanguageToggle from '@/components/LanguageToggle';
 import { useState } from 'react';
 
 const DashboardLayout = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const user = useAuthStore((state) => state.user);
   const logout = useAuthStore((state) => state.logout);
   const currentWorkspace = useWorkspaceStore((state) => state.currentWorkspace);
   const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const navigation = [
-    { name: 'Accueil', href: '/dashboard', icon: Home },
-    { name: 'Agents', href: '/dashboard/agents', icon: Bot },
-    { name: 'Contacts', href: '/dashboard/contacts', icon: Users },
-    { name: 'Conversations', href: '/dashboard/conversations', icon: MessageCircle },
-    { name: 'Broadcasts', href: '/dashboard/broadcasts', icon: Megaphone },
-    { name: 'Analytics', href: '/dashboard/analytics', icon: BarChart3 },
-    { name: 'Abonnement', href: '/dashboard/billing', icon: CreditCard },
-    { name: 'Paramètres', href: '/dashboard/settings', icon: Settings },
+    { name: t('dashboard.home'), href: '/dashboard', icon: Home },
+    { name: t('dashboard.agents'), href: '/dashboard/agents', icon: Bot },
+    { name: t('dashboard.contacts'), href: '/dashboard/contacts', icon: Users },
+    { name: t('dashboard.conversations'), href: '/dashboard/conversations', icon: MessageCircle },
+    { name: t('dashboard.broadcasts'), href: '/dashboard/broadcasts', icon: Megaphone },
+    { name: t('dashboard.analytics'), href: '/dashboard/analytics', icon: BarChart3 },
+    { name: t('dashboard.billing'), href: '/dashboard/billing', icon: CreditCard },
+    { name: t('dashboard.settings'), href: '/dashboard/settings', icon: Settings },
   ];
 
   const handleLogout = () => {
@@ -81,6 +84,7 @@ const DashboardLayout = () => {
 
         {/* User section */}
         <div className="p-4 border-t border-border">
+          {sidebarOpen && <div className="mb-3 flex justify-center"><LanguageToggle /></div>}
           {sidebarOpen ? (
             <div className="flex items-center justify-between">
               <div className="flex-1 min-w-0">

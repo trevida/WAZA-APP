@@ -4,11 +4,17 @@ from database import get_db
 from models import User
 from schemas.user import UserCreate, UserLogin, UserResponse, TokenResponse, RefreshTokenRequest, VerifyEmailRequest, ForgotPasswordRequest, ResetPasswordRequest
 from utils.auth import hash_password, verify_password, create_access_token, create_refresh_token, verify_token, generate_verification_token
+from services.email_service import email_service
 from datetime import datetime, timedelta, timezone
+from pydantic import BaseModel, EmailStr
 import logging
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/auth", tags=["Authentication"])
+
+
+class ResendVerificationRequest(BaseModel):
+    email: EmailStr
 
 @router.post("/register", response_model=TokenResponse, status_code=status.HTTP_201_CREATED)
 async def register(user_data: UserCreate, db: Session = Depends(get_db)):
@@ -44,7 +50,8 @@ async def register(user_data: UserCreate, db: Session = Depends(get_db)):
     
     logger.info(f"New user registered: {new_user.email}")
     
-    # TODO: Send verification email
+    # Send verification email (mock)
+    email_service.send_verification_email(new_user.email, new_user.verification_token)
     
     return TokenResponse(
         access_token=access_token,
@@ -151,7 +158,8 @@ async def forgot_password(request: ForgotPasswordRequest, db: Session = Depends(
         db.commit()
         
         logger.info(f"Password reset requested: {user.email}")
-        # TODO: Send reset email
+        # Send reset email (mock)
+        email_service.send_password_reset_email(user.email, reset_token)
     
     # Always return success to prevent email enumeration
     return {"message": "If the email exists, a reset link has been sent"}
@@ -178,3 +186,17 @@ async def reset_password(request: ResetPasswordRequest, db: Session = Depends(ge
     logger.info(f"Password reset successful: {user.email}")
     
     return {"message": "Password reset successfully"}
+
+
+@router.post("/resend-verification")
+async def resend_verification(request: ResendVerificationRequest, db: Session = Depends(get_db)):
+    """Resend verification email"""
+    user = db.query(User).filter(User.email == request.email).first()
+
+    if user and not user.is_verified:
+        token = generate_verification_token()
+        user.verification_token = token
+        db.commit()
+        email_service.send_verification_email(user.email, token)
+
+    return {"message": "If the account exists and is not verified, a new email has been sent"}
